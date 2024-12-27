@@ -1,0 +1,16 @@
+{
+  "name": "gloxv",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "private": true,
+  "devDependencies": {
+    "vite": "^6.0.6"
+  },
+  "dependencies": {
+    "@vitejs/plugin-vue": "^5.2.1"
+  }
+}
