@@ -1,7 +1,9 @@
 <template>
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary bg-gradient">
     <div class="container-fluid">
-      <img class="navbar-brand fit-image" src="/banner.jpg" alt="Banner of comic book covers" />
+      <div class="row col-lg-1">
+        <img class="" src="/images/datamap/datamap_updated_logo.jpg" alt="Banner of comic book covers" />
+      </div>
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <li class="nav-item">
           <div>
