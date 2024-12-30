@@ -1,0 +1,22 @@
+@use "core";
+
+input {
+  outline: none;
+  border: none;
+}
+
+.pagination {
+  display: flex;
+  flex-flow: row;
+  flex-wrap: wrap;
+  list-style: none;
+  padding-inline-start: 0;
+}
+
+.pagination-control {
+  font-size: 14px;
+}
+
+.pagination-item {
+  font-size: 14px;
+}
