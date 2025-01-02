@@ -1,3 +1,8 @@
-const $msg = 'Hello from series.js';
+const express = require("express");
+const router = express.Router();
 
-export { $msg };
+router.get("/series", (req, res) => {
+  res.send("This is the series page!");
+});
+
+module.exports = { router };

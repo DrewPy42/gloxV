@@ -1,5 +1,5 @@
 import { defaultStore } from './defaultStore'
-import { fetchWrapper } from '../../core'
+import { fetchWrapper } from '../index'
 import { ref } from 'vue'
 
 export default function createActions(state: defaultStore) {
