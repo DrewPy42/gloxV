@@ -1,5 +1,3 @@
-import { RequestOptionsModel } from '@/core'
-
 export const fetchWrapper = {
   get: request('GET'),
   post: request('POST'),
@@ -8,9 +6,9 @@ export const fetchWrapper = {
   upload: upload()
 }
 
-function request(method: string) {
-  return (url: string, body = null) => {
-    const requestOptions: RequestOptionsModel = {
+function request(method) {
+  return (url,body = null) => {
+    const requestOptions = {
       credentials: 'include',
       method,
       headers: authHeader()
@@ -25,7 +23,7 @@ function request(method: string) {
 }
 
 function upload() {
-  return (url: string, file: any, fileField: string) => {
+  return (url, file, fileField) => {
     const formData = new FormData()
 
     formData.append(fileField, file)
@@ -40,8 +38,8 @@ function upload() {
 
 // helper functions
 
-function authHeader(): any {
   // const { user } = useAuthStore();
+function authHeader() {
   // const isLoggedIn = !!user?.id;
   // if (isLoggedIn) {
   //   return { Authorization: `Bearer ${user.id}` };
@@ -50,8 +48,8 @@ function authHeader(): any {
   // }
 }
 
-function handleResponse(response: any) {
-  return response.text().then((text: string) => {
+function handleResponse(response) {
+  return response.text().then((text) => {
     const data = text && JSON.parse(text)
 
     if (!response.ok) {

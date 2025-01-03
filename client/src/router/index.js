@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import homePage from '@/components/pages/homePage.vue'
-import seriesDashboard from '@/components/dashboards/seriesDashboard.vue'
+import seriesDashboard from '@/components/dashboards/series/seriesDashboard.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
