@@ -15,5 +15,5 @@ COPY . .
 # Expose the port for the Vue.js app
 EXPOSE 5173
 
-# Start Nginx
+# Start vite in development mode
 CMD ["npm", "run", "dev"]

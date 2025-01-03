@@ -1,11 +1,18 @@
+require('dotenv').config();
+
 const express = require('express');
 const app = express();
 const path = require("path");
 const fs = require("fs");
 const PORT = 3000;
+const cors = require('cors');
+
 
 // Middleware to parse JSON requests
 app.use(express.json());
+
+// Middleware to enable CORS
+app.use(cors());
 
 // Dynamic route loading
 const routersPath = path.join(__dirname, "routes");

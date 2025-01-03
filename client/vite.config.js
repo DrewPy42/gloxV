@@ -11,16 +11,16 @@ export default defineConfig({
   },
   server: {
     host: true, // Allow to access the server from external devices
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000/api',
+        changeOrigin: true
+      }
+    }
   },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'), // Ensure this line exists
-    },
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3000',
-        changeOrigin: true
-      }
     },
   },
 });
