@@ -1,0 +1,39 @@
+.control-list {
+  display: flex;
+  flex-flow: row;
+  flex-wrap: wrap;
+  list-style: none;
+  padding: 11px 0;
+  .control-button {
+    color: var(--bs-white);
+    font-size: 13px;
+    text-decoration: none;
+    padding: 0 5px;
+  }
+}
+.dashboard-header {
+  color: var(--bs-gray-dark);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.4;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+.dashboard-selector {
+  cursor: pointer;
+  margin: 0 3px 0 0;
+  padding: 5px 12px;
+}
+.dropdown-toggle::after {
+  display: none;
+}
+.pagination-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+.sortable {
+  cursor: pointer;
+}
+
+

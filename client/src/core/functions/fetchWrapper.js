@@ -9,16 +9,17 @@ export const fetchWrapper = {
 function request(method) {
   return (url,body = null) => {
     const requestOptions = {
-      credentials: 'include',
       method,
-      headers: authHeader()
     }
     if (body && body !== '') {
       requestOptions.headers['Content-Type'] = 'application/json'
       requestOptions.body = JSON.stringify(body)
     }
     // @ts-ignore
-    return fetch(url, requestOptions).then(handleResponse)
+    return fetch(url, requestOptions).then(() => {
+      console.log('fetchWrapper', url, requestOptions);
+      return handleResponse;
+    })
   }
 }
 

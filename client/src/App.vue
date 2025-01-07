@@ -1,16 +1,21 @@
 <template>
-  <header>
-    <mainMenu />
-  </header>
+  <div class="app-container">
+    <header>
+      <mainMenu />
+    </header>
 
-  <RouterView />
-  <footer class="bg-primary bg-gradient fixed-bottom p-3 mb-5">
-    <div class="col-md-12 text-end">
-      <div class="copyright fs-6 text-white">
-        Copyright ©{{ currentYear }} by M. Andrew Patterson. All rights reserved.
-      </div>
+    <div class="content">
+      <RouterView />
     </div>
-  </footer>
+
+    <footer class="bg-primary bg-gradient p-3">
+      <div class="col-md-12 text-end">
+        <div class="copyright fs-6 text-white">
+          Copyright ©{{ currentYear }} by M. Andrew Patterson. All rights reserved.
+        </div>
+      </div>
+    </footer>
+  </div>
 </template>
 
 <script>
@@ -34,4 +39,14 @@ export default {
 }
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Ensure the page height stretches to full viewport height */
+}
+
+.content {
+  flex: 1; /* Pushes the footer to the bottom if there's not enough content */
+}
+</style>

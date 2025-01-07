@@ -150,5 +150,5 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@use '../../styles/pagination';
+  @use '@/styles/pagination';
 </style>

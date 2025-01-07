@@ -4,3 +4,12 @@ export const formatCurrency = (value) => {
 export const formatPercentage = (value) => {
   return `${(value * 100).toFixed(2)}%`;
 }
+
+export const perPageOptions = [
+  {records: 25, text: '25 / pg'},
+  {records: 50, text: '50 / pg'},
+  {records: 150, text: '150 / pg'},
+  {records: 200, text: '200 / pg'},
+  {records: 250, text: '250 / pg'},
+  {records: 500, text: '500 / pg'},
+];
