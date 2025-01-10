@@ -14,7 +14,7 @@ const router = createRouter({
       path: '/series',
       name: 'series',
       component: seriesDashboard
-    }
+    },
   ]
 })
 

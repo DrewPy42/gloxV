@@ -1,3 +1,5 @@
+import DOMPurify from 'dompurify';
+
 export const formatCurrency = (value) => {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
 }
@@ -13,3 +15,8 @@ export const perPageOptions = [
   {records: 250, text: '250 / pg'},
   {records: 500, text: '500 / pg'},
 ];
+
+export const makeViewLink = (recordType, id, text) => {
+  const cleanText = DOMPurify.sanitize(text);
+  return `<a href=${"/" + recordType + "/" + id + "/view"}>${cleanText}</a>`;
+}
