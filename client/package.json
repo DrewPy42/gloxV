@@ -27,7 +27,8 @@
     "vue-axios": "^3.5.2",
     "vue-fontawesome": "^0.0.2",
     "vue-loader": "^17.4.2",
-    "vue-router": "^4.5.0"
+    "vue-router": "^4.5.0",
+    "yup": "^1.6.1"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.25.9",

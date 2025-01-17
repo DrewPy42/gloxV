@@ -3,6 +3,7 @@
     :show="modalOpen"
     :modal-used="modalType"
     @save-and-close="modalOpen = false"
+    :selected-id="selectedID"
   />
   <tbody>
     <tr v-show="totalRecords === 0 && !loading">
@@ -16,7 +17,7 @@
       v-for="record in records"
       :key="record.id">
       <td></td>
-      <td v-html='makeViewLink("series", record.title_id, record.title)' @click="toggleModal(id)"></td>
+      <td class='clickable' @click="toggleModal(record.title_id)"><a href="#">{{ record.title }}</a></td>
       <td class="text-center">{{ record.issn }}</td>
       <td class="text-center">{{ formatCurrency(record.series_price) }}</td>
       <td class="text-center">{{ formatCurrency(record.series_value) }}</td>
@@ -46,8 +47,14 @@ export default {
   setup() {
     const modalOpen = ref(false);
     const modalType = ref('series');
+    const selectedID = ref(null);
 
-    return { modalOpen, modalType, formatCurrency, formatPercentage, makeViewLink, modalWrapper }
+    function toggleModal(id) {
+      selectedID.value = id;
+      modalOpen.value = true;
+    }
+
+    return { modalOpen, modalType, selectedID, formatCurrency, formatPercentage, makeViewLink, toggleModal, modalWrapper }
   }
 }
 

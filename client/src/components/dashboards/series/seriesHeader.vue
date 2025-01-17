@@ -55,7 +55,7 @@ export default {
       totalPages.value = Math.ceil(count.value / 25)
       message.value = `Displaying ${series.value.length} records of ${count.value} total records`
     }
-    onMounted(fetchSeries)
+    onMounted(fetchSeries);
 
     const changePage = (page) => {
       currentPage.value = page
