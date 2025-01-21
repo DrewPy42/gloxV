@@ -8,7 +8,23 @@ router.get("/api/series", (req, res) => {
   //as well as the limit and page number to limit the number of records returned
   //also need to add the WHERE clause to filter the records
   //also need to add the COUNT(*) to return the total number of records
-
+  const baseQuery = `SELECT title_id,
+                          title,
+                          issn,
+                          limited_series,
+                          comicage_id,
+                          series_price,
+                          series_value,
+                          series_value_gain,
+                          volume_count,
+                          issue_count,
+                          copy_count,
+                          p.publisher_id,
+                          publisher_name,
+                          logo,
+                          website
+                   FROM series_title t
+                            LEFT JOIN publisher p ON t.publisher_id = p.publisher_id`;
 
   let queryString = ``;
 
@@ -17,13 +33,11 @@ router.get("/api/series", (req, res) => {
     const limit = req.query.limit || 25;
     const page = req.query.page || 1;
     const offset = (page - 1) * limit;
-    queryString = `SELECT *
-                   FROM series_title
+    queryString = `${baseQuery}
                    ORDER BY title
                    LIMIT ${limit} OFFSET ${offset}`;
   } else {
-    queryString = `SELECT *
-                   FROM series_title
+    queryString = `${baseQuery}
                    WHERE title_id = ${id}
                    ORDER BY title`;
   }
