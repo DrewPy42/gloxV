@@ -1,17 +1,17 @@
 <template>
   <nav>
     <ul class="pagination">
-      <li class="page-item blue">
+      <li class="page-item">
         <span class="page-link pagination-item clickable" :class="{ disabled: isInFirstPage }">
           <font-awesome-icon :icon="['fas', 'angles-left']" @click="onClickFirstPage" />
         </span>
       </li>
-      <li class="page-item blue">
+      <li class="page-item">
         <span class="page-link pagination-item clickable" :class="{ disabled: isInFirstPage }">
           <font-awesome-icon :icon="['fas', 'angle-left']" @click="onClickPreviousPage" />
         </span>
       </li>
-      <li v-for="page in pages" :key="page">
+      <li class="page-item" v-for="page in pages" :key="page">
         <div v-if="page === null" class="ellipsis blue">
           <span class="page-link pagination-item disabled">
             <font-awesome-icon :icon="['fas', 'ellipsis']" />
@@ -28,12 +28,12 @@
         />
       </li>
 
-      <li class="page-item blue">
+      <li class="page-item">
         <span class="page-link pagination-item clickable" :class="{ disabled: isInLastPage }">
           <font-awesome-icon :icon="['fas', 'angle-right']" @click="onClickNextPage" />
         </span>
       </li>
-      <li class="page-item blue">
+      <li class="page-item">
         <span class="page-link pagination-item clickable" :class="{ disabled: isInLastPage }">
           <font-awesome-icon :icon="['fas', 'angles-right']" @click="onClickLastPage" />
         </span>

@@ -1,24 +1,41 @@
 <template>
   <Transition name="modal">
-<div v-if="show" class="modal-mask">
-  <div class="modal-wrapper">
-    <div class="modal-container d-flex justify-content-between">
-      <div class="modal-items w-75">
-        <div class="modal-header">
-          <button @click="closeAndExit">X</button>
-        </div>
-        <div class="modal-body">
-          <div v-if="modalUsed === 'series'">
-            <SeriesForm :title_id="selectedID" />
+    <div v-if="show" class="modal-mask">
+      <div class="modal-wrapper">
+        <div class="modal-container d-flex justify-content-between">
+          <div class="modal-items w-100">
+            <div class="modal-header d-flex justify-content-between">
+              <div>
+                <h3 class="capitalize">{{ modalName }} View</h3>
+              </div>
+              <div>
+                <ul class="button-group">
+                  <li
+                    class="btn button-item button-item-submit btn-primary"
+                    @click="closeAndExit"
+                  >X</li>
+                </ul>
+              </div>
+            </div>
+            <div class="modal-body">
+              <div v-if="modalUsed === 'series'">
+                <SeriesForm :title_id="selectedID" />
+              </div>
+            </div>
+            <div class="modal-footer">
+              <div class="form-controls">
+                <ul class="button-group">
+                  <li
+                    class="btn button-item button-item-submit"
+                    @click="saveRecord"
+                  >Save</li>
+                </ul>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="modal-footer">
-          <button @click="closeAndExit">Close</button>
         </div>
       </div>
     </div>
-  </div>
-</div>
   </Transition>
 </template>
 
@@ -46,6 +63,10 @@ export default {
       emit('saveAndClose', 'true');
     }
 
+    function saveRecord() {
+      emit('saveAndClose', 'true');
+    }
+
     watchEffect(() => {
       if (props.modalUsed) {
         modalName.value = props.modalUsed;
@@ -58,7 +79,7 @@ export default {
     onMounted(() => {
 
     })
-    return { modalName, selectedID, closeAndExit, switchModal, SeriesForm }
+    return { modalName, selectedID, closeAndExit, saveRecord, SeriesForm }
   },
 }
 </script>

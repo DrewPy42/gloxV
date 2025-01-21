@@ -20,3 +20,9 @@ input {
 .pagination-item {
   font-size: 14px;
 }
+
+.page-item.pagination-item.page-link {
+  font-size: 15px;
+  height: 100%;
+  padding: 0 10px;
+}

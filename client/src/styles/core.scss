@@ -1,16 +1,64 @@
-.banner {
-  height: 100px;
+.button-item {
+  text-transform: uppercase;
+  list-style-type: none;
+  margin: 0 3px 0 0 !important;
+  padding: 5px 12px !important;
+  cursor: pointer;
 }
-
+.button-item-submit {
+  background-color: var(--bs-blue);
+  border: 1px solid var(--bs-blue);
+  color: var(--bs-white);
+}
+.capitalize {
+  text-transform: capitalize;
+}
 .clickable {
   cursor: pointer;
 }
-
-.fit-image {
-  width: 10%;
-  height: 10%;
+.command-bar {
+  padding: 0 10px;
+  width: 100%;
 }
-
-.icon {
-  padding-right: 5px;
+.green {
+  color: var(--bs-green);
+}
+.label-text {
+  font-size: .9rem;
+  font-weight: bold;
+}
+.modal-link {
+  cursor: pointer;
+  text-decoration: underline;
+}
+.no-records {
+  font-weight: bold;
+  font-size: 12px;
+}
+.red {
+  color: var(--bs-red);
+}
+.record-count {
+  color: blue;
+  text-transform: uppercase;
+  font-size: 14px;
+  font-weight: 500;
+}
+.spinner {
+  padding-left: 50%;
+}
+.table-row {
+  font-size: 11px;
+}
+.text-center {
+  text-align: center;
+}
+html {
+  font-size: 13px !important;
+}
+td {
+  padding: 2px 4px !important;
+}
+th {
+  font-size: 11px !important;
 }
