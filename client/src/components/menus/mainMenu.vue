@@ -2,7 +2,7 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary bg-gradient">
     <div class="container-fluid">
       <div class="row col-lg-1">
-        <img class="img-fluid w-50"
+        <img class="main-menu-logo"
              src="/images/datamap/datamap_updated_logo.jpg"
              alt="DataMAP logo" />
       </div>

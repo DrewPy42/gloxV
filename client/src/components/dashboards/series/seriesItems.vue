@@ -7,7 +7,7 @@
   />
   <tbody>
     <tr v-show="totalRecords === 0 && !loading">
-      <td colspan="9" class="no-records">
+      <td colspan="10" class="no-records">
         <font-awesome-icon :icon="['fas', 'angle-left']" class="red" />
         No Records Found
       </td>
@@ -18,7 +18,13 @@
       :key="record.id">
       <td></td>
       <td class='clickable' @click="toggleModal(record.title_id)"><a href="#">{{ record.title }}</a></td>
-      <td class="text-center">{{ record.issn }}</td>
+      <td class="text-center">
+        <img
+          :src="record.logo ? `/images/logos/${record.logo}` : '/images/logos/default-logo.png'"
+          :alt="`${record.publisher_name} logo`"
+          class="publisher-icon"
+        />
+      </td>
       <td class="text-center">{{ formatCurrency(record.series_price) }}</td>
       <td class="text-center">{{ formatCurrency(record.series_value) }}</td>
       <td class="text-center">{{ formatPercentage(record.series_value_gain) }}</td>
@@ -54,7 +60,19 @@ export default {
       modalOpen.value = true;
     }
 
-    return { modalOpen, modalType, selectedID, formatCurrency, formatPercentage, makeViewLink, toggleModal, modalWrapper }
+    // const publisherIcon = (record.value) => {
+    //   return {
+    //     'background-image': 'url(https://via.placeholder.com/150)',
+    //     'background-size': 'cover',
+    //     'background-position': 'center',
+    //     'width': '50px',
+    //     'height': '50px',
+    //     'border-radius': '50%'
+    //   }
+    // }
+
+    return { modalOpen, modalType, selectedID, formatCurrency, formatPercentage,
+      makeViewLink, toggleModal, modalWrapper }
   }
 }
 

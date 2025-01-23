@@ -13,7 +13,7 @@
           <tr class="table-header">
             <th></th>
             <th>Title</th>
-            <th scope="col" class="text-center">ISSN</th>
+            <th scope="col" class="text-center">Publisher</th>
             <th scope="col" class="text-center">Total Price</th>
             <th scope="col" class="text-center">Total Value</th>
             <th scope="col" class="text-center">Value Gain</th>
