@@ -1,0 +1,18 @@
+@use 'core';
+
+.header {
+  color: #2A3239;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+.form-check-input {
+  margin-top: 0;
+  height: 38px !important;
+  width: 38px !important;
+}
+.status-update {
+  min-height: 24px;
+}

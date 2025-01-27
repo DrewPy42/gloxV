@@ -2,17 +2,19 @@
   <div>
     <h1>Series Dashboard</h1>
     <div class="record-count">{{ message }}</div>
-    <pagination
-      :total-pages="totalPages"
-      :current-page="currentPage"
-      @page-changed="changePage"
-    />
+    <div class="pagination-container">
+      <pagination
+        :total-pages="totalPages"
+        :current-page="currentPage"
+        @page-changed="changePage"
+      />
+    </div >
     <div class="table-responsive">
       <table class="table table-striped table-hover">
         <thead>
           <tr class="table-header">
-            <th></th>
             <th>Title</th>
+            <th scope="col" class="text-center">Limited Series</th>
             <th scope="col" class="text-center">Publisher</th>
             <th scope="col" class="text-center">Total Price</th>
             <th scope="col" class="text-center">Total Value</th>

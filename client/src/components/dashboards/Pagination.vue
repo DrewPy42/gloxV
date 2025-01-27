@@ -11,7 +11,7 @@
           <font-awesome-icon :icon="['fas', 'angle-left']" @click="onClickPreviousPage" />
         </span>
       </li>
-      <li class="page-item" v-for="page in pages" :key="page">
+      <li v-for="page in pages" :key="page">
         <div v-if="page === null" class="ellipsis blue">
           <span class="page-link pagination-item disabled">
             <font-awesome-icon :icon="['fas', 'ellipsis']" />

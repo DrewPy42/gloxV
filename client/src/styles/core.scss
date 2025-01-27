@@ -1,3 +1,5 @@
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
 .button-item {
   text-transform: uppercase;
   list-style-type: none;
@@ -19,6 +21,9 @@
 .command-bar {
   padding: 0 10px;
   width: 100%;
+}
+.form-check-input {
+  margin-top: 0;
 }
 .green {
   color: var(--bs-green);
@@ -47,18 +52,14 @@
 .spinner {
   padding-left: 50%;
 }
-.table-row {
-  font-size: 11px;
-}
 .text-center {
   text-align: center;
 }
-html {
-  font-size: 13px !important;
+
+.blue-icon {
+  color: #007bff;
 }
-td {
-  padding: 2px 4px !important;
-}
-th {
-  font-size: 11px !important;
+
+.red-icon {
+  color: #dc3545;
 }

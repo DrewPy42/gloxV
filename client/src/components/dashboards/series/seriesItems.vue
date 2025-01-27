@@ -16,13 +16,25 @@
       class="table-row"
       v-for="record in records"
       :key="record.id">
-      <td></td>
       <td class='clickable' @click="toggleModal(record.title_id)"><a href="#">{{ record.title }}</a></td>
       <td class="text-center">
+        <font-awesome-icon
+          v-if="record.limited_series"
+          :icon="['fas', 'circle-check']"
+          class="blue-icon"
+        />
+      </td>
+      <td class="text-center">
         <img
-          :src="record.logo ? `/images/logos/${record.logo}` : '/images/logos/default-logo.png'"
+          v-if="record.logo"
+          :src="`/images/logos/${record.logo}`"
           :alt="`${record.publisher_name} logo`"
           class="publisher-icon"
+        />
+        <font-awesome-icon
+          v-else
+          :icon="['fas', 'file-circle-question']"
+          class="red-icon"
         />
       </td>
       <td class="text-center">{{ formatCurrency(record.series_price) }}</td>
@@ -39,10 +51,12 @@
 import { formatCurrency, formatPercentage, makeViewLink } from '@/core';
 import modalWrapper from '@/components/modals/modalWrapper.vue'
 import { ref } from 'vue'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 export default {
   name: 'seriesItems',
   components: {
+    FontAwesomeIcon,
     modalWrapper
   },
   props: {
