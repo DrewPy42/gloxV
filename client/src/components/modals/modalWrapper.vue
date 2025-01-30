@@ -4,10 +4,7 @@
       <div class="modal-wrapper">
         <div class="modal-container d-flex justify-content-between">
           <div class="modal-items w-100">
-            <div class="modal-header d-flex justify-content-between">
-              <div>
-                <h3 class="capitalize">{{ modalName }} View</h3>
-              </div>
+            <div class="modal-header d-flex justify-content-end">
               <div>
                 <ul class="button-group">
                   <li
