@@ -11,27 +11,35 @@
   border-radius: 2px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
   transition: all 0.3s ease;
+  font-size: 14px !important;
 }
+
 .modal-body {
   margin: 20px 0;
 }
+
 .modal-enter-from {
   opacity: 0;
 }
+
 .modal-header h3 {
   margin-top: 0;
   color: var(--bs-blue);
 }
+
 .modal-items {
   padding: 25px;
 }
+
 .modal-leave-to {
   opacity: 0;
 }
+
 .modal-enter-from .modal-container,
 .modal-leave-to .modal-container {
   transform: translateX(75%);
 }
+
 .modal-mask {
   position: fixed;
   z-index: 9998;
@@ -43,14 +51,20 @@
   display: table;
   transition: opacity 0.3s ease;
 }
+
 .modal-wrapper {
   height: 100%;
   overflow-y: scroll;
 }
+
 .notes {
   height: 100%;
 }
+
 .subtotal {
   padding-left: 10px;
 }
 
+.btn {
+  font-size: 14px !important;
+}

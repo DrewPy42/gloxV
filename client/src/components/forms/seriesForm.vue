@@ -8,8 +8,8 @@
         v-slot="{ errors, isSubmitting }"
       >
         <div class="card-group">
-          <div class="card">
-            <div class="card-header">Series Details</div>
+          <div class="card w-75">
+            <div class="card-header fw-bold">Series Details</div>
             <div class="card-body">
               <div class="form-group mx-3">
                 <div class="input-block input-group my-1">
@@ -23,11 +23,26 @@
                     name="series_title"
                     v-model="seriesRecord.title"
                     rules="required"
-                    class="form-control"
+                    class="form-control form-input"
                     :class="{ 'is-invalid': errors['series_title'] }"
                   />
                 </div>
                 <ErrorMessage class="red" name="series_title" />
+                <div class="input-block input-group my-1">
+                  <label
+                    class="input-label input-group-text col-4"
+                    for="alt_titles"
+                  >Alternate Title</label>
+                  <Field
+                    type="text"
+                    id="alt_titles"
+                    name="alt_titles"
+                    v-model="seriesRecord.alt_titles"
+                    class="form-control form-input"
+                    :class="{ 'is-invalid': errors['alt_titles'] }"
+                  />
+                </div>
+                <ErrorMessage class="red" name="alt_titles" />
                 <div class="input-block input-group my-1">
                   <label
                     class="input-label input-group-text col-4"
@@ -53,7 +68,7 @@
                     id="series_publisher"
                     name="series_publisher"
                     v-model="seriesRecord.publisher_id"
-                    class="form-control"
+                    class="form-control form-input"
                     :class="{ 'is-invalid': errors['series_publisher'] }"
                   >
                     <option value="">Select Publisher</option>
@@ -67,34 +82,47 @@
                 </div>
                 <ErrorMessage class="red" name="series_publisher" />
               </div>
+              <div class="card-img-bottom>">
+                <img
+                  v-if="seriesRecord.logo"
+                  :src="`/images/logos/${seriesRecord.logo}`"
+                  :alt="`${seriesRecord.publisher_name} logo`"
+                  class="publisher-logo-small rounded mx-3"
+                />
+                <font-awesome-icon
+                  v-else
+                  :icon="['fas', 'file-circle-question']"
+                  class="red-icon no-logo rounded mx-3"
+                />
+              </div>
             </div>
           </div>
-          <div class="stats-block card">
-            <div class="card-header">Series Stats</div>
+          <div class="stats-block card w-25">
+            <div class="card-header fw-bold">Series Stats</div>
             <div class="card-body">
               <div class="input-block input-group m-1">
                 <div class="input-label input-group-text col-3">Volumes</div>
-                <div class="form-control">{{ seriesRecord.volume_count }}</div>
+                <div class="form-control form-input">{{ seriesRecord.volume_count }}</div>
               </div>
               <div class="input-block input-group m-1">
-                <div class="input-label input-group-text col-3">Issues:</div>
-                <div class="form-control">{{ seriesRecord.issue_count }}</div>
+                <div class="input-label input-group-text col-3">Issues</div>
+                <div class="form-control form-input">{{ seriesRecord.issue_count }}</div>
               </div>
               <div class="input-block input-group m-1">
-                <div class="input-label input-group-text col-3">Copies:</div>
-                <div class="form-control">{{ seriesRecord.copy_count }}</div>
+                <div class="input-label input-group-text col-3">Copies</div>
+                <div class="form-control form-input">{{ seriesRecord.copy_count }}</div>
               </div>
               <div class="input-block input-group m-1">
-                <div class="input-label input-group-text col-3">Total Price:</div>
-                <div class="form-control">{{ formatCurrency(seriesRecord.series_price) }}</div>
+                <div class="input-label input-group-text col-3">Total Price</div>
+                <div class="form-control form-input">{{ formatCurrency(seriesRecord.series_price) }}</div>
               </div>
               <div class="input-block input-group m-1">
-                <div class="input-label input-group-text col-3">Total Value:</div>
-                <div class="form-control">{{ formatCurrency(seriesRecord.series_value) }}</div>
+                <div class="input-label input-group-text col-3">Total Value</div>
+                <div class="form-control form-input">{{ formatCurrency(seriesRecord.series_value) }}</div>
               </div>
               <div class="input-block input-group m-1">
-                <div class="input-label input-group-text col-3">Value Gain:</div>
-                <div class="form-control">{{ formatPercentage(seriesRecord.series_value_gain) }}</div>
+                <div class="input-label input-group-text col-3">Value Gain</div>
+                <div class="form-control form-input">{{ formatPercentage(seriesRecord.series_value_gain) }}</div>
               </div>
             </div>
             <div class="card-footer text-end">
@@ -103,6 +131,9 @@
           </div>
         </div>
       </Form>
+      <div class="card-group">
+        <SeriesFormVolumes :title_id="title_id" />
+      </div>
     </div>
   </div>
 </template>
@@ -112,10 +143,11 @@ import { ref, onMounted } from 'vue'
 import { ErrorMessage, Field, Form } from 'vee-validate'
 import { formatCurrency, formatPercentage } from '@/core'
 import * as yup from 'yup'
+import SeriesFormVolumes from '@/components/forms/seriesFormVolumes.vue'
 
 export default {
   name: 'SeriesForm',
-  components: { ErrorMessage, Form, Field },
+  components: { ErrorMessage, Form, Field, SeriesFormVolumes },
   props: {
     title_id: Number
   },
@@ -123,6 +155,7 @@ export default {
     const seriesRecord = ref({})
     const publishers = ref([])
     const limitedSeries = ref(false)
+    const title_id = ref(props.title_id)
     const fetchTitle = async () => {
       if (!props.title_id) return
       const query = `?id=${props.title_id}`
@@ -160,7 +193,7 @@ export default {
     })
 
     return {
-      publishers, seriesRecord, limitedSeries, schema,
+      publishers, seriesRecord, limitedSeries, schema, title_id,
       formatCurrency, formatPercentage, onSubmit, onInvalidSubmit
     }
   }

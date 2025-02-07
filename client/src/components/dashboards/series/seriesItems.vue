@@ -74,17 +74,6 @@ export default {
       modalOpen.value = true;
     }
 
-    // const publisherIcon = (record.value) => {
-    //   return {
-    //     'background-image': 'url(https://via.placeholder.com/150)',
-    //     'background-size': 'cover',
-    //     'background-position': 'center',
-    //     'width': '50px',
-    //     'height': '50px',
-    //     'border-radius': '50%'
-    //   }
-    // }
-
     return { modalOpen, modalType, selectedID, formatCurrency, formatPercentage,
       makeViewLink, toggleModal, modalWrapper }
   }

@@ -7,51 +7,64 @@
   padding: 5px 12px !important;
   cursor: pointer;
 }
+
 .button-item-submit {
   background-color: var(--bs-blue);
   border: 1px solid var(--bs-blue);
   color: var(--bs-white);
 }
+
 .capitalize {
   text-transform: capitalize;
 }
+
 .clickable {
   cursor: pointer;
 }
+
 .command-bar {
   padding: 0 10px;
   width: 100%;
 }
+
 .form-check-input {
   margin-top: 0;
 }
+
 .green {
   color: var(--bs-green);
 }
+
 .label-text {
   font-size: .9rem;
   font-weight: bold;
 }
+
 .modal-link {
   cursor: pointer;
   text-decoration: underline;
 }
+
 .no-records {
   font-weight: bold;
   font-size: 12px;
 }
+
 .red {
   color: var(--bs-red);
 }
+
 .record-count {
   color: blue;
   text-transform: uppercase;
   font-size: 14px;
   font-weight: 500;
 }
+
 .spinner {
   padding-left: 50%;
 }
+
 .text-center {
   text-align: center;
 }
@@ -62,4 +75,35 @@
 
 .red-icon {
   color: #dc3545;
+}
+
+.publisher-icon {
+  display: inline-block;
+  height: 20px;
+  margin-right: 5px;
+  width: 20px;
+}
+
+.publisher-logo {
+  display: inline-block;
+  max-height: 200px;
+  width: auto;
+}
+
+.publisher-logo-small {
+  display: inline-block;
+  max-height: 100px;
+  width: auto;
+}
+
+.no-logo {
+  color: var(--bs-red);
+  height: 200px;
+  width: auto;
+}
+
+.no-logo-small {
+  color: var(--bs-red);
+  height: 100px;
+  width: auto;
 }
