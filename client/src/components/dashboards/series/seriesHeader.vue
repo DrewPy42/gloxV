@@ -33,7 +33,8 @@
 <script>
 import Pagination from '@/components/dashboards/Pagination.vue';
 import { onMounted, ref, watchEffect } from "vue";
-import SeriesItems from '@/components/dashboards/series/seriesItems.vue'
+import { fetchWrapper } from '@/core';
+import SeriesItems from '@/components/dashboards/series/seriesItems.vue';
 
 export default {
   components: {
@@ -42,20 +43,20 @@ export default {
   },
   name: 'seriesHeader',
   setup() {
-    const message = ref('Loading series data...')
-    const series = ref([])
-    const count = ref([])
-    const currentPage = ref(1)
-    const totalPages = ref(1)
+    const message = ref('Loading series data...');
+    const series = ref([]);
+    const count = ref([]);
+    const currentPage = ref(1);
+    const totalPages = ref(1);
 
     const fetchSeries = async () => {
-      const query = `?page=${currentPage.value}&limit=25`
-      const response = await fetch(`http://localhost:3000/api/series${query}`)
-      const data = await response.json()
-      series.value = data.results
-      count.value = data.count[0].total
-      totalPages.value = Math.ceil(count.value / 25)
-      message.value = `Displaying ${series.value.length} records of ${count.value} total records`
+      const query = `?page=${currentPage.value}&limit=25`;
+      const url = `http://localhost:3000/api/series${query}`;
+      const data = await fetchWrapper.get(url);
+      series.value = data.results;
+      count.value = data.count[0].total;
+      totalPages.value = Math.ceil(count.value / 25);
+      message.value = `Found ${count.value} total records`;
     }
     onMounted(fetchSeries);
 

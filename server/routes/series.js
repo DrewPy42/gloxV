@@ -11,7 +11,7 @@ router.get("/api/series", (req, res) => {
   const baseQuery = `SELECT title_id,
                           title,
                           issn,
-                          alt_titles,
+                          alt_title,
                           limited_series,
                           comic_age_id,
                           series_cover_price,

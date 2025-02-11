@@ -25,7 +25,7 @@
 
 <script>
 import { onMounted, ref } from 'vue'
-import { formatDate } from '@/core'
+import { fetchWrapper, formatDate } from '@/core'
 
 export default {
   name: 'SeriesFormVolumes',
@@ -36,11 +36,11 @@ export default {
     const title_id = ref(props.title_id)
     const volumes = ref([])
     const fetchVolumes = async () => {
-      if (!props.title_id) return
-      const query = `?title_id=${props.title_id}`
-      const response = await fetch(`http://localhost:3000/api/volume${query}`)
-      const data = await response.json()
-      volumes.value = data.results
+      if (!props.title_id) return;
+      const query = `?title_id=${props.title_id}`;
+      const url = `http://localhost:3000/api/volume${query}`;
+      const data = await fetchWrapper.get(url);
+      volumes.value = data.results;
     }
     onMounted(() => {
       fetchVolumes()

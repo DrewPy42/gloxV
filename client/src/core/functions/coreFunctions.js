@@ -30,3 +30,12 @@ export const formatDate = (date) => {
     month: 'short',
   }).format(new Date(date));
 }
+
+export async function checkImageExists(url) {
+  try {
+    const response = await fetch(url, { method: "HEAD" });
+    return response.ok;
+  } catch (error) {
+    return false;
+  }
+}

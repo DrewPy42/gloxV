@@ -42,6 +42,16 @@
                     :class="{ 'is-invalid': errors['alt_titles'] }"
                   />
                 </div>
+                <div v-if="seriesRecord.previous_title_id || seriesRecord.new_title_id">
+                  <div class="input-block input-group my-1">
+                    <div class="col">
+                      <a v-if="seriesRecord.previous_title_id" href="#" class="btn btn-info"></a>
+                    </div>
+                    <div class="col">
+                      <a v-if="seriesRecord.new_title_id" href="#" class="btn btn-info">New Title</a>
+                    </div>
+                  </div>
+                </div>
                 <ErrorMessage class="red" name="alt_titles" />
                 <div class="input-block input-group my-1">
                   <label
@@ -84,7 +94,7 @@
               </div>
               <div class="card-img-bottom>">
                 <img
-                  v-if="seriesRecord.logo"
+                  v-if="logoExists"
                   :src="`/images/logos/${seriesRecord.logo}`"
                   :alt="`${seriesRecord.publisher_name} logo`"
                   class="publisher-logo-small rounded mx-3"
@@ -141,7 +151,7 @@
 <script>
 import { ref, onMounted } from 'vue'
 import { ErrorMessage, Field, Form } from 'vee-validate'
-import { formatCurrency, formatPercentage } from '@/core'
+import { formatCurrency, formatPercentage, checkImageExists, fetchWrapper } from '@/core'
 import * as yup from 'yup'
 import SeriesFormVolumes from '@/components/forms/seriesFormVolumes.vue'
 
@@ -152,24 +162,25 @@ export default {
     title_id: Number
   },
   setup(props) {
-    const seriesRecord = ref({})
-    const publishers = ref([])
-    const limitedSeries = ref(false)
-    const title_id = ref(props.title_id)
+    const seriesRecord = ref({});
+    const publishers = ref([]);
+    const limitedSeries = ref(false);
+    const title_id = ref(props.title_id);
+    const logoExists = ref(false);
     const fetchTitle = async () => {
       if (!props.title_id) return
       const query = `?id=${props.title_id}`
-      const response = await fetch(`http://localhost:3000/api/series${query}`)
-      const data = await response.json()
-      seriesRecord.value = data.results[0]
-      limitedSeries.value = !!data.results[0].limited_series
+      const url = `http://localhost:3000/api/series${query}`;
+      const data = fetchWrapper.get(url);
+      seriesRecord.value = data.results[0];
+      limitedSeries.value = !!data.results[0].limited_series;
     }
 
     const fetchPublishers = async () => {
-      const query = `?getall=true`
-      const response = await fetch(`http://localhost:3000/api/publisher${query}`)
-      const data = await response.json()
-      publishers.value = data.results
+      const query = `?getall=true`;
+      const url = `http://localhost:3000/api/publisher${query}`;
+      const data = fetchWrapper.get(url);
+      publishers.value = data.results;
     }
 
     const schema = yup.object().shape({
@@ -186,14 +197,14 @@ export default {
       console.log('Form invalid')
     }
 
-
-    onMounted(() => {
+    onMounted( () => {
       fetchTitle()
       fetchPublishers()
+      logoExists.value = checkImageExists(`/images/logos/${seriesRecord.value.logo}`);
     })
 
     return {
-      publishers, seriesRecord, limitedSeries, schema, title_id,
+      publishers, seriesRecord, limitedSeries, logoExists, schema, title_id,
       formatCurrency, formatPercentage, onSubmit, onInvalidSubmit
     }
   }
