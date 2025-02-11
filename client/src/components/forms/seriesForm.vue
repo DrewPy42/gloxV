@@ -149,38 +149,38 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watchEffect } from 'vue'
 import { ErrorMessage, Field, Form } from 'vee-validate'
 import { formatCurrency, formatPercentage, checkImageExists, fetchWrapper } from '@/core'
 import * as yup from 'yup'
 import SeriesFormVolumes from '@/components/forms/seriesFormVolumes.vue'
 
 export default {
-  name: 'SeriesForm',
   components: { ErrorMessage, Form, Field, SeriesFormVolumes },
+  name: 'SeriesForm',
   props: {
     title_id: Number
   },
   setup(props) {
-    const seriesRecord = ref({});
-    const publishers = ref([]);
-    const limitedSeries = ref(false);
-    const title_id = ref(props.title_id);
-    const logoExists = ref(false);
+    const seriesRecord = ref({})
+    const publishers = ref([])
+    const limitedSeries = ref(false)
+    const title_id = ref(props.title_id)
+    const logoExists = ref(false)
     const fetchTitle = async () => {
       if (!props.title_id) return
       const query = `?id=${props.title_id}`
-      const url = `http://localhost:3000/api/series${query}`;
-      const data = fetchWrapper.get(url);
-      seriesRecord.value = data.results[0];
-      limitedSeries.value = !!data.results[0].limited_series;
+      const url = `http://localhost:3000/api/series${query}`
+      const data = await fetchWrapper.get(url)
+      seriesRecord.value = data.results[0]
+      limitedSeries.value = !!data.results[0].limited_series
     }
 
     const fetchPublishers = async () => {
-      const query = `?getall=true`;
-      const url = `http://localhost:3000/api/publisher${query}`;
-      const data = fetchWrapper.get(url);
-      publishers.value = data.results;
+      const query = `?getall=true`
+      const url = `http://localhost:3000/api/publisher${query}`
+      const data = await fetchWrapper.get(url)
+      publishers.value = data.results
     }
 
     const schema = yup.object().shape({
@@ -197,10 +197,10 @@ export default {
       console.log('Form invalid')
     }
 
-    onMounted( () => {
-      fetchTitle()
-      fetchPublishers()
-      logoExists.value = checkImageExists(`/images/logos/${seriesRecord.value.logo}`);
+    onMounted(async () => {
+      await fetchTitle()
+      await fetchPublishers()
+      logoExists.value = await checkImageExists(`/images/logos/${seriesRecord.value.logo}`)
     })
 
     return {
