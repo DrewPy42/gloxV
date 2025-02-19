@@ -136,7 +136,9 @@
               </div>
             </div>
             <div class="card-footer text-end">
-              <a href="#" class="btn btn-primary">Regenerate Stats</a>
+              <a href="#"
+                 @click.prevent="regenStats(seriesRecord.title_id)"
+                 class="btn btn-primary">Regenerate Stats</a>
             </div>
           </div>
         </div>
@@ -197,6 +199,17 @@ export default {
       console.log('Form invalid')
     }
 
+    function regenStats(id) {
+      const query = `?id=${id}`;
+      const url = `http://localhost:3000/api/stats${query}`;
+      fetchWrapper.get(url)
+        .then(data => {
+          // seriesRecord.value = data.results[0];
+          console.log(data);
+        })
+        .catch(err => console.error(err));
+    }
+
     onMounted(async () => {
       await fetchTitle()
       await fetchPublishers()
@@ -205,7 +218,7 @@ export default {
 
     return {
       publishers, seriesRecord, limitedSeries, logoExists, schema, title_id,
-      formatCurrency, formatPercentage, onSubmit, onInvalidSubmit
+      formatCurrency, formatPercentage, onSubmit, onInvalidSubmit, regenStats
     }
   }
 }
