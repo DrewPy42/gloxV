@@ -1,5 +1,5 @@
 <template>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary bg-gradient">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary bg-gradient" role="navigation">
     <div class="container-fluid">
       <div class="row col-lg-1">
         <img class="main-menu-logo"
@@ -15,23 +15,72 @@
             </router-link>
           </div>
         </li>
-        <li class="nav-item">
-          <div>
-            <router-link class="nav-link" to="/series">
-              <font-awesome-icon :icon="['far', 'envelope']" class="icon" />
-              Series
-            </router-link>
-          </div>
+        <li class="nav-item dropdown">
+          <menu-dropdown
+            :menu-title="'Series'"
+            :menu-id="'menuSeries'"
+            :menu-options="menu.seriesMenuOptions"
+            :show="showMenu('menuSeries')"
+            :menu-icon-code = "'fa'"
+            :menu-icon-name = "'fa-book'"
+            @mouseenter="menuHover('menuSeries')"
+            @mouseleave="menuHover('menuSeries')"
+          />
+        </li>
+        <li class="nav-item dropdown">
+          <menu-dropdown
+            :menu-title="'Tools'"
+            :menu-id="'menuTools'"
+            :menu-options="menu.toolsMenuOptions"
+            :show="showMenu('menuTools')"
+            :menu-icon-code = "'fas'"
+            :menu-icon-name = "'wrench'"
+            @mouseenter="menuHover('menuTools')"
+            @mouseleave="menuHover('menuTools')"
+          />
         </li>
       </ul>
     </div>
   </nav>
 </template>
 
-<script setup>
-import { RouterLink } from 'vue-router'
+<script>
+import { RouterLink } from 'vue-router';
+import MenuDropdown from "./menuDropdown.vue";
+import { MainMenu } from '@/core';
+import { ref } from 'vue';
+
+export default {
+  components: {
+    RouterLink,
+    MenuDropdown
+  },
+  setup() {
+    const menu = MainMenu;
+    const menuStatus = ref([
+      { id: 'menuSeries', show: false },
+      { id: 'menuTools', show: false }
+    ])
+
+    function menuHover(menu) {
+      const menuIndex = menuStatus.value.findIndex((obj => obj.id === menu));
+      menuStatus.value[menuIndex].show = !menuStatus.value[menuIndex].show;
+    }
+
+    function showMenu(menu) {
+      const stepIndex = menuStatus.value.findIndex((obj => obj.id === menu));
+      return menuStatus.value[stepIndex].show;
+    }
+    return {
+      menu,
+      showMenu,
+      menuHover
+    };
+  }
+}
+
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 @use '../../styles/menus.scss';
 </style>

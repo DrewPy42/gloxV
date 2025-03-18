@@ -124,7 +124,7 @@
               </div>
               <div class="input-block input-group m-1">
                 <div class="input-label input-group-text col-3">Total Price</div>
-                <div class="form-control form-input">{{ formatCurrency(seriesRecord.series_price) }}</div>
+                <div class="form-control form-input">{{ formatCurrency(seriesRecord.series_cover_price) }}</div>
               </div>
               <div class="input-block input-group m-1">
                 <div class="input-label input-group-text col-3">Total Value</div>
@@ -132,7 +132,7 @@
               </div>
               <div class="input-block input-group m-1">
                 <div class="input-label input-group-text col-3">Value Gain</div>
-                <div class="form-control form-input">{{ formatPercentage(seriesRecord.series_value_gain) }}</div>
+                <div class="form-control form-input">{{ formatPercentage(seriesRecord.series_value_change) }}</div>
               </div>
             </div>
             <div class="card-footer text-end">
@@ -204,8 +204,12 @@ export default {
       const url = `http://localhost:3000/api/stats${query}`;
       fetchWrapper.get(url)
         .then(data => {
-          // seriesRecord.value = data.results[0];
-          console.log(data);
+          seriesRecord.value.volume_count = data.volumes;
+          seriesRecord.value.issue_count = data.issues;
+          seriesRecord.value.copy_count = data.copies;
+          seriesRecord.value.series_cover_price = data.cprice;
+          seriesRecord.value.series_value = data.cvalue;
+          seriesRecord.value.series_value_change = data.cgain;
         })
         .catch(err => console.error(err));
     }

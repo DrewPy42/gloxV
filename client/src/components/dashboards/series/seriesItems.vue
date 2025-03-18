@@ -37,9 +37,9 @@
           class="red-icon"
         />
       </td>
-      <td class="text-center">{{ formatCurrency(record.series_price) }}</td>
+      <td class="text-center">{{ formatCurrency(record.series_cover_price) }}</td>
       <td class="text-center">{{ formatCurrency(record.series_value) }}</td>
-      <td class="text-center">{{ formatPercentage(record.series_value_gain) }}</td>
+      <td class="text-center">{{ formatPercentage(record.series_value_change) }}</td>
       <td class="text-center">{{ record.volume_count }}</td>
       <td class="text-center">{{ record.issue_count }}</td>
       <td class="text-center">{{ record.copy_count }}</td>

@@ -1,8 +1,13 @@
 @use "core";
 
+.dropdown {
+  color: var(--bs-navbar-color);
+  padding: 4px;
+}
+
 .dropdown-item {
-  color: var(--bs-gray);
-  font-size: 11px;
+  color: var(--bs-black) !important;
+  font-size: 14px !important;
   text-transform: uppercase;
 }
 
