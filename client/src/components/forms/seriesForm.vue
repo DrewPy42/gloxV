@@ -31,17 +31,18 @@
                 <div class="input-block input-group my-1">
                   <label
                     class="input-label input-group-text col-4"
-                    for="alt_titles"
-                  >Alternate Title</label>
+                    for="sort_title"
+                  >Sorting Title</label>
                   <Field
                     type="text"
-                    id="alt_titles"
-                    name="alt_titles"
-                    v-model="seriesRecord.alt_titles"
+                    id="sort_title"
+                    name="sort_title"
+                    v-model="seriesRecord.sort_title"
                     class="form-control form-input"
-                    :class="{ 'is-invalid': errors['alt_titles'] }"
+                    :class="{ 'is-invalid': errors['sort_title'] }"
                   />
                 </div>
+                <ErrorMessage class="red" name="sort_title" />
                 <div v-if="seriesRecord.previous_title_id || seriesRecord.new_title_id">
                   <div class="input-block input-group my-1">
                     <div class="col">
@@ -52,7 +53,6 @@
                     </div>
                   </div>
                 </div>
-                <ErrorMessage class="red" name="alt_titles" />
                 <div class="input-block input-group my-1">
                   <label
                     class="input-label input-group-text col-4"

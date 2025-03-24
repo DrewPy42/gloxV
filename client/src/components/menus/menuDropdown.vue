@@ -22,6 +22,7 @@
           class="nav-link dropdown-item"
           :to="option.link"
         >
+          <font-awesome-icon v-if=option.iconString :icon="[option.iconCode, option.iconString]" class="icon" />
           {{ option.title }}
         </router-link>
       </li>

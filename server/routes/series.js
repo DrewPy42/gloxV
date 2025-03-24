@@ -3,15 +3,10 @@ const router = express.Router();
 const db = require("../controllers/db");
 
 router.get("/api/series", (req, res) => {
-  //connect to the mysql database and return the series_title records
-  //need to add the ORDER BY clause to sort the records
-  //as well as the limit and page number to limit the number of records returned
-  //also need to add the WHERE clause to filter the records
-  //also need to add the COUNT(*) to return the total number of records
   const baseQuery = `SELECT title_id,
                           title,
                           issn,
-                          alt_title,
+                          sort_title,
                           limited_series,
                           comic_age_id,
                           series_cover_price,
@@ -37,12 +32,12 @@ router.get("/api/series", (req, res) => {
     const page = req.query.page || 1;
     const offset = (page - 1) * limit;
     queryString = `${baseQuery}
-                   ORDER BY title
+                   ORDER BY COALESCE(sort_title, title)
                    LIMIT ${limit} OFFSET ${offset}`;
   } else {
     queryString = `${baseQuery}
                    WHERE title_id = ${id}
-                   ORDER BY title`;
+                   ORDER BY COALESCE(sort_title, title)`;
   }
 
   const queryCount = `SELECT COUNT(*) as total

@@ -5,8 +5,6 @@
 </template>
 
 <script>
-//connect to the backend series express server and return the series data
-import { ref } from 'vue'
 import SeriesHeader from './seriesHeader.vue'
 
 export default {
