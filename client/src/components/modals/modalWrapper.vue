@@ -19,16 +19,6 @@
                 <SeriesForm :title_id="selectedID" />
               </div>
             </div>
-            <div class="modal-footer">
-              <div class="form-controls">
-                <ul class="button-group">
-                  <li
-                    class="btn button-item button-item-submit"
-                    @click="saveRecord"
-                  >Save</li>
-                </ul>
-              </div>
-            </div>
           </div>
         </div>
       </div>
