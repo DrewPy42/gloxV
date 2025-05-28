@@ -43,16 +43,6 @@
                   />
                 </div>
                 <ErrorMessage class="red" name="sort_title" />
-                <div v-if="seriesRecord.previous_title_id || seriesRecord.new_title_id">
-                  <div class="input-block input-group my-1">
-                    <div class="col">
-                      <a v-if="seriesRecord.previous_title_id" href="#" class="btn btn-info"></a>
-                    </div>
-                    <div class="col">
-                      <a v-if="seriesRecord.new_title_id" href="#" class="btn btn-info">New Title</a>
-                    </div>
-                  </div>
-                </div>
                 <div class="input-block input-group my-1">
                   <label
                     class="input-label input-group-text col-4"

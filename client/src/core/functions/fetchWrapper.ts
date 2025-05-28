@@ -4,36 +4,34 @@ export const fetchWrapper = {
   put: request('PUT'),
   delete: request('DELETE'),
   upload: upload()
-}
+};
 
-function request(method) {
-  return (url,body = null) => {
-    const requestOptions = {
+function request(method: string) {
+  return (url: string, body: any = null): Promise<any> => {
+    const requestOptions: RequestInit = {
       method,
-    }
+      headers: {},
+    };
     if (body && body !== '') {
-      requestOptions.headers['Content-Type'] = 'application/json'
-      requestOptions.body = JSON.stringify(body)
+      (requestOptions.headers as Record<string, string>)['Content-Type'] = 'application/json';
+      requestOptions.body = JSON.stringify(body);
     }
-    // @ts-ignore
     return fetch(url, requestOptions).then((response) => {
       return response.json();
-      // return handleResponse;
-    })
-  }
+    });
+  };
 }
 
 function upload() {
-  return (url, file, fileField) => {
+  return (url: string, file: File, fileField: string): Promise<any> => {
     const formData = new FormData();
-
     formData.append(fileField, file);
-    const requestOptions = {
+    const requestOptions: RequestInit = {
       method: 'POST',
-      body: formData
+      body: formData,
     };
     return fetch(url, requestOptions).then((response) => {
       return response.json();
     });
-  }
+  };
 }

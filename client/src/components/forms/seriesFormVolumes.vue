@@ -3,6 +3,7 @@
     <table class="table table-striped table-hover">
       <thead>
       <tr class="table-header">
+        <th></th>
         <th class="text-center">Volume</th>
         <th class="text-center">Issue Range</th>
         <th class="text-center">Start Date</th>
@@ -12,6 +13,9 @@
       </thead>
       <tbody>
       <tr v-for="volume in volumes" :key="volume.id">
+        <td class='clickable'><font-awesome-icon
+          :icon="['fas', 'gear']"
+        /></td>
         <td class="text-center">{{ volume.volume_number }}</td>
         <td class="text-center">{{ volume.issue_range }}</td>
         <td class="text-center">{{ formatDate(volume.start_date) }}</td>
@@ -26,6 +30,8 @@
 <script>
 import { onMounted, ref } from 'vue'
 import { fetchWrapper, formatDate } from '@/core'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import MenuDropdown from "../menus/menuDropdown.vue";
 
 export default {
   name: 'SeriesFormVolumes',
