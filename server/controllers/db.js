@@ -1,12 +1,12 @@
 /**
  * The mysql package is required to create a connection to the MySQL database.
- * @type {import('mysql')}
+ * @type {import('mysql2')}
  */
-const mysql = require("mysql");
+const mysql = require("mysql2");
 
 /**
  * The MySQL connection object, configured using environment variables.
- * @type {import('mysql').Connection}
+ * @type {import('mysql2').Connection}
  */
 const connection = mysql.createConnection({
   host: process.env.MYSQL_HOST || 'localhost',
@@ -24,7 +24,7 @@ const connection = mysql.createConnection({
  */
 connection.connect((err) => {
   if (err) {
-    console.log('Connecting to MySQL with:', connection.config);
+    //console.log('Connecting to MySQL with:', connection.config);
     console.error("An error occurred while connecting to the DB");
     throw err;
   }

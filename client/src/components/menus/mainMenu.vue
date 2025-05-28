@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar navbar-expand-lg navbar-dark bg-primary bg-gradient" role="navigation">
     <div class="container-fluid">
-      <div class="row col-lg-1">
+      <div class="row">
         <img class="main-menu-logo"
              src="/images/datamap/datamap_updated_logo.jpg"
              alt="DataMAP logo" />
