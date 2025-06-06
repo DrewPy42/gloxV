@@ -133,7 +133,7 @@
           </div>
         </div>
       </Form>
-      <div class="card w-100">
+      <div class="card w-50">
         <div class="card-header fw-bold">Volumes</div>
           <SeriesFormVolumes
             :title_id="title_id"
@@ -165,17 +165,25 @@ import SeriesFormVolumes from '@/components/forms/seriesFormVolumes.vue'
 import SeriesFormIssues from '@/components/forms/seriesFormIssues.vue'
 
 export default {
-  components: { ErrorMessage, Form, Field, SeriesFormVolumes, SeriesFormIssues },
+  components: { 
+    ErrorMessage,
+    Form,
+    Field,
+    SeriesFormVolumes,
+    SeriesFormIssues
+  },
   name: 'SeriesForm',
   props: {
     title_id: Number
   },
   setup(props) {
-    const seriesRecord = ref({})
-    const publishers = ref([])
-    const limitedSeries = ref(false)
-    const title_id = ref(props.title_id)
-    const logoExists = ref(false)
+    const seriesRecord = ref({});
+    const publishers = ref([]);
+    const limitedSeries = ref(false);
+    const title_id = ref(props.title_id);
+    const logoExists = ref(false);
+    const selectedVolume = ref(null);
+
     const fetchTitle = async () => {
       if (!props.title_id) return
       const query = `?id=${props.title_id}`

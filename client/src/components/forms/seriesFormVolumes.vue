@@ -12,7 +12,7 @@
       </tr>
       </thead>
       <tbody>
-        <tr v-for="record in records" :key="volume.id">
+        <tr v-for="record in records" :key="volume_id">
           <td class='clickable'><font-awesome-icon
             :icon="['fas', 'gear']"
           /></td>
