@@ -18,6 +18,7 @@
     ],
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
+    "jsx": "react-jsx", // Add this if using React
     "paths": {
       "@/*": [
         "./src/*"
@@ -25,7 +26,9 @@
     }
   },
   "include": [
-    "./src/**/*.ts"
+    "./src/**/*.ts",
+    "./src/**/*.tsx",
+    "./src"
   ],
   "exclude": [
     "node_modules",

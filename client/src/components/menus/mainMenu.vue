@@ -29,6 +29,18 @@
         </li>
         <li class="nav-item dropdown">
           <menu-dropdown
+            :menu-title="'Reports'"
+            :menu-id="'menuReports'"
+            :menu-options="menu.reportsMenuOptions"
+            :show="showMenu('menuReports')"
+            :menu-icon-code = "'fa'"
+            :menu-icon-name = "'fa-print'"
+            @mouseenter="menuHover('menuReports')"
+            @mouseleave="menuHover('menuReports')"
+          />
+        </li>
+        <li class="nav-item dropdown">
+          <menu-dropdown
             :menu-title="'Tools'"
             :menu-id="'menuTools'"
             :menu-options="menu.toolsMenuOptions"
@@ -44,41 +56,32 @@
   </nav>
 </template>
 
-<script>
+<script setup lang="ts">
 import { RouterLink } from 'vue-router';
 import MenuDropdown from "./menuDropdown.vue";
 import { MainMenu } from '@/core';
 import { ref } from 'vue';
 
-export default {
-  components: {
-    RouterLink,
-    MenuDropdown
-  },
-  setup() {
-    const menu = MainMenu;
-    const menuStatus = ref([
-      { id: 'menuSeries', show: false },
-      { id: 'menuTools', show: false }
-    ])
+// Get the menu options by calling MainMenu()
+const menu = MainMenu();
 
-    function menuHover(menu) {
-      const menuIndex = menuStatus.value.findIndex((obj => obj.id === menu));
-      menuStatus.value[menuIndex].show = !menuStatus.value[menuIndex].show;
-    }
+const menuStatus = ref([
+  { id: 'menuSeries', show: false },
+  { id: 'menuReports', show: false },
+  { id: 'menuTools', show: false }
+]);
 
-    function showMenu(menu) {
-      const stepIndex = menuStatus.value.findIndex((obj => obj.id === menu));
-      return menuStatus.value[stepIndex].show;
-    }
-    return {
-      menu,
-      showMenu,
-      menuHover
-    };
+function menuHover(menuId: string) {
+  const menuIndex = menuStatus.value.findIndex(obj => obj.id === menuId);
+  if (menuIndex !== -1) {
+    menuStatus.value[menuIndex].show = !menuStatus.value[menuIndex].show;
   }
 }
 
+function showMenu(menuId: string) {
+  const stepIndex = menuStatus.value.findIndex(obj => obj.id === menuId);
+  return stepIndex !== -1 ? menuStatus.value[stepIndex].show : false;
+}
 </script>
 
 <style lang="scss">

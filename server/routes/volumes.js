@@ -12,7 +12,7 @@ router.get("/api/volume", (req, res) => {
                          end_date,
                          missing_issues,
                          notes
-                            FROM series_volume`;
+                      FROM series_volume`;
   let queryString = ``;
   const id = req.query.id;
   if (id === undefined) {

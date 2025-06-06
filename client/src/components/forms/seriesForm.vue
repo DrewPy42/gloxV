@@ -43,16 +43,6 @@
                   />
                 </div>
                 <ErrorMessage class="red" name="sort_title" />
-                <div v-if="seriesRecord.previous_title_id || seriesRecord.new_title_id">
-                  <div class="input-block input-group my-1">
-                    <div class="col">
-                      <a v-if="seriesRecord.previous_title_id" href="#" class="btn btn-info"></a>
-                    </div>
-                    <div class="col">
-                      <a v-if="seriesRecord.new_title_id" href="#" class="btn btn-info">New Title</a>
-                    </div>
-                  </div>
-                </div>
                 <div class="input-block input-group my-1">
                   <label
                     class="input-label input-group-text col-4"
@@ -143,8 +133,24 @@
           </div>
         </div>
       </Form>
-      <div class="card-group">
-        <SeriesFormVolumes :title_id="title_id" />
+      <div class="card w-100">
+        <div class="card-header fw-bold">Volumes</div>
+          <SeriesFormVolumes
+            :title_id="title_id"
+          />
+      </div>
+      <div class="card w-100">
+        <div class="card-header fw-bold">Issues</div>
+        <div class="card-body">
+          <SeriesFormIssues
+            :title_id="title_id"
+            :volume_id="seriesRecord.volume_id"
+            v-if="seriesRecord.volume_id"
+          />
+          <div v-else class="alert alert-warning">
+            <strong>Note: </strong> Select a volume to manage issues.
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -156,9 +162,10 @@ import { ErrorMessage, Field, Form } from 'vee-validate'
 import { formatCurrency, formatPercentage, checkImageExists, fetchWrapper } from '@/core'
 import * as yup from 'yup'
 import SeriesFormVolumes from '@/components/forms/seriesFormVolumes.vue'
+import SeriesFormIssues from '@/components/forms/seriesFormIssues.vue'
 
 export default {
-  components: { ErrorMessage, Form, Field, SeriesFormVolumes },
+  components: { ErrorMessage, Form, Field, SeriesFormVolumes, SeriesFormIssues },
   name: 'SeriesForm',
   props: {
     title_id: Number
