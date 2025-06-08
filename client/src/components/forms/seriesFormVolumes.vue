@@ -12,10 +12,16 @@
       </tr>
       </thead>
       <tbody>
+        <tr v-show="records.length === 0 && !loading">
+          <td colspan="6" class="no-records">
+            <font-awesome-icon :icon="['fas', 'angle-left']" class="red" />
+            No Records Found
+          </td>
+        </tr>
         <tr v-for="record in records" :key="volume_id">
-          <td class='clickable'><font-awesome-icon
-            :icon="['fas', 'gear']"
-          /></td>
+          <td class='clickable'>
+            <font-awesome-icon :icon="['fas', 'gear']" />
+          </td>
           <td class="text-center">{{ record.volume_number }}</td>
           <td class="text-center">{{ record.issue_range }}</td>
           <td class="text-center">{{ formatDate(record.start_date) }}</td>

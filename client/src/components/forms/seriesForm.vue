@@ -148,7 +148,7 @@
             v-if="seriesRecord.volume_id"
           />
           <div v-else class="alert alert-warning">
-            <strong>Note: </strong> Select a volume to manage issues.
+            <strong>Note: </strong> Select or create a volume to manage issues.
           </div>
         </div>
       </div>
