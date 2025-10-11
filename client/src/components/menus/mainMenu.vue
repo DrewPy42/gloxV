@@ -8,12 +8,10 @@
       </div>
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <li class="nav-item">
-          <div>
-            <router-link class="nav-link" to="/">
-              <font-awesome-icon :icon="['fas', 'house']" class="icon" />
-              Home
-            </router-link>
-          </div>
+          <router-link class="nav-link" to="/">
+            <font-awesome-icon :icon="['fas', 'house']" class="icon" />
+            Home
+          </router-link>
         </li>
         <li class="nav-item dropdown">
           <menu-dropdown
