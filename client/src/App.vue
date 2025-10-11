@@ -8,10 +8,10 @@
       <RouterView />
     </div>
 
-    <footer class="bg-primary bg-gradient p-3">
+    <footer class="footer-wibbit p-3">
       <div class="col-md-12 text-end">
         <div class="copyright fs-6 text-white">
-          Copyright ©{{ currentYear }} by M. Andrew Patterson. All rights reserved.
+          Copyright ©{{ currentYear }} by WibbitWorks, LLC. All rights reserved.
         </div>
       </div>
     </footer>

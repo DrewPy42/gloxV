@@ -1,0 +1,98 @@
+// _overrides.scss
+// --------------------------------------------
+// WibbitWorks Custom Component Styles
+// --------------------------------------------
+@use "sass:color";
+@use 'variables' as *;
+
+// 🐸 Buttons
+.btn {
+  border-radius: 0.5rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  &.btn-primary {
+    background-color: $froggy-green;
+    border: none;
+
+    &:hover {
+      background-color: $lilypad-teal;
+    }
+  }
+
+  &.btn-secondary {
+    background-color: $lilypad-teal;
+    border: none;
+
+    &:hover {
+      background-color: color.adjust($lilypad-teal, $lightness: -8%);
+    }
+  }
+}
+
+// 🧱 Cards
+.card {
+  border: none;
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  background-color: $light;
+
+  .card-title {
+    color: $deep-navy;
+    font-weight: 600;
+  }
+
+  .card-text {
+    color: color.adjust($deep-navy, $lightness: -15%);
+  }
+}
+
+// 🧭 Navbar
+.navbar {
+  background-color: $froggy-green;
+  border-bottom: 4px solid $lilypad-teal;
+  padding: 0.75rem 1rem;
+
+  .navbar-brand {
+    color: $deep-navy;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+
+    &:hover {
+      color: $soft-lemon;
+    }
+  }
+
+  .nav-link {
+    color: $deep-navy;
+    transition: color 0.2s;
+
+    &:hover {
+      color: $soft-lemon;
+    }
+  }
+}
+
+// 🦶 Footer
+.footer-wibbit {
+  background: linear-gradient(135deg, $froggy-green 0%, $lilypad-teal 100%);
+  border-top: 4px solid $deep-navy;
+}
+
+// ⚙️ Alerts
+.alert {
+  border: none;
+  border-radius: 0.75rem;
+  color: $deep-navy;
+}
+
+// 💡 Utility tweak: rounded corners everywhere
+.rounded {
+  border-radius: 0.75rem !important;
+}

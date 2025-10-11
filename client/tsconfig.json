@@ -18,7 +18,8 @@
     ],
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
-    "jsx": "react-jsx", // Add this if using React
+    "jsx": "preserve",
+    "jsxImportSource": "vue",
     "paths": {
       "@/*": [
         "./src/*"
@@ -28,6 +29,7 @@
   "include": [
     "./src/**/*.ts",
     "./src/**/*.tsx",
+    "./src/**/*.vue",
     "./src"
   ],
   "exclude": [

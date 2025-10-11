@@ -1,0 +1,13 @@
+// _color-utilities.scss
+@use 'variables' as *;
+
+.text-wibbit-green { color: $froggy-green !important; }
+.text-wibbit-teal { color: $lilypad-teal !important; }
+.text-wibbit-navy { color: $deep-navy !important; }
+.text-wibbit-lemon { color: $soft-lemon !important; }
+
+.bg-wibbit-green { background-color: $froggy-green !important; }
+.bg-wibbit-teal { background-color: $lilypad-teal !important; }
+.bg-wibbit-navy { background-color: $deep-navy !important; }
+.bg-wibbit-lemon { background-color: $soft-lemon !important; }
+.bg-wibbit-gray { background-color: $cloud-gray !important; }

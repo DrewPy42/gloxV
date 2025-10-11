@@ -1,4 +1,5 @@
-@import 'bootstrap/dist/css/bootstrap.min.css';
+@use "sass:color";
+@use 'variables' as *;
 
 .button-item {
   text-transform: uppercase;
@@ -9,8 +10,8 @@
 }
 
 .button-item-submit {
-  background-color: var(--bs-blue);
-  border: 1px solid var(--bs-blue);
+  background-color: $froggy-green;
+  border: 1px solid $froggy-green;
   color: var(--bs-white);
 }
 
@@ -55,7 +56,7 @@
 }
 
 .record-count {
-  color: blue;
+  color: $lilypad-teal;
   text-transform: uppercase;
   font-size: 14px;
   font-weight: 500;
@@ -70,11 +71,11 @@
 }
 
 .blue-icon {
-  color: #007bff;
+  color: $lilypad-teal;
 }
 
 .red-icon {
-  color: #dc3545;
+  color: #E85A5A;
 }
 
 .publisher-icon {

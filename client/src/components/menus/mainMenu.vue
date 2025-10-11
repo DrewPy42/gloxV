@@ -1,10 +1,10 @@
 <template>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-primary bg-gradient" role="navigation">
+  <nav class="navbar navbar-expand-lg navbar-dark" role="navigation">
     <div class="container-fluid">
       <div class="row">
         <img class="main-menu-logo"
-             src="/images/datamap/datamap_updated_logo.jpg"
-             alt="DataMAP logo" />
+             src="/images/favicon/favicon.svg"
+             alt="WibbitWorks logo" />
       </div>
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <li class="nav-item">
@@ -72,14 +72,14 @@ const menuStatus = ref([
 ]);
 
 function menuHover(menuId: string) {
-  const menuIndex = menuStatus.value.findIndex(obj => obj.id === menuId);
+  const menuIndex = menuStatus.value.findIndex((obj: any) => obj.id === menuId);
   if (menuIndex !== -1) {
     menuStatus.value[menuIndex].show = !menuStatus.value[menuIndex].show;
   }
 }
 
 function showMenu(menuId: string) {
-  const stepIndex = menuStatus.value.findIndex(obj => obj.id === menuId);
+  const stepIndex = menuStatus.value.findIndex((obj: any) => obj.id === menuId);
   return stepIndex !== -1 ? menuStatus.value[stepIndex].show : false;
 }
 </script>

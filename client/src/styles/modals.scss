@@ -1,3 +1,4 @@
+@use 'variables' as *;
 @use "core";
 
 .modal-container {
@@ -24,7 +25,7 @@
 
 .modal-header h3 {
   margin-top: 0;
-  color: var(--bs-blue);
+  color: $deep-navy;
 }
 
 .modal-items {

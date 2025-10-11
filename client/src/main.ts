@@ -15,9 +15,8 @@ if (typeof window !== 'undefined' && typeof window.structuredClone === 'undefine
   (globalThis as any).structuredClone = structured_clone;
 }
 
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap';
 
+import '@/styles/main.scss'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { library, config } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';

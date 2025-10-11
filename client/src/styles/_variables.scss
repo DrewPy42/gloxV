@@ -1,0 +1,43 @@
+// _variables.scss
+// --------------------------------------------
+// WibbitWorks Brand Palette
+// --------------------------------------------
+@use "sass:color";
+
+$froggy-green: #6CC24A;
+$lilypad-teal: #3FBF9D;
+$deep-navy: #1C2B39;
+$soft-lemon: #FEE191;
+$cloud-gray: #F5F5F5;
+
+// --------------------------------------------
+// Bootstrap Variable Overrides
+// --------------------------------------------
+$primary: $froggy-green;
+$secondary: $lilypad-teal;
+$dark: $deep-navy;
+$warning: $soft-lemon;
+$light: $cloud-gray;
+
+// Optional visual tweaks
+$body-bg: $cloud-gray;
+$body-color: $deep-navy;
+$link-color: $lilypad-teal;
+$link-hover-color: color.adjust($lilypad-teal, $lightness: -10%);
+$border-radius: 0.5rem;
+$box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+
+
+// --------------------------------------------
+// Bootstrap Theme Colors Map
+// --------------------------------------------
+$theme-colors: (
+  "primary": $froggy-green,
+  "secondary": $lilypad-teal,
+  "dark": $deep-navy,
+  "warning": $soft-lemon,
+  "light": $cloud-gray,
+  "success": $froggy-green,
+  "info": $lilypad-teal,
+  "danger": #E85A5A // optional accent red if needed
+);
