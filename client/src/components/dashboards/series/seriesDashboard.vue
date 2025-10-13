@@ -16,8 +16,6 @@ export default {
   }
 }
 
-
-
 </script>
 <style scoped lang="scss">
   @use "@/styles/dashboards.scss";

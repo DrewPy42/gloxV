@@ -27,3 +27,11 @@ input {
   height: 100%;
   padding: 0 10px;
 }
+
+// Override Bootstrap's disabled class for pagination items
+// Keep visual styling but allow click events
+.pagination-item.disabled {
+  pointer-events: auto !important;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
