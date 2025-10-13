@@ -157,9 +157,10 @@
 </template>
 
 <script>
-import { ref, onMounted, watchEffect } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { ErrorMessage, Field, Form } from 'vee-validate'
 import { formatCurrency, formatPercentage, checkImageExists, fetchWrapper } from '@/core'
+import { useSeriesStore } from '@/core/stores/seriesStore'
 import * as yup from 'yup'
 import SeriesFormVolumes from '@/components/forms/seriesFormVolumes.vue'
 import SeriesFormIssues from '@/components/forms/seriesFormIssues.vue'
@@ -177,20 +178,42 @@ export default {
     title_id: Number
   },
   setup(props) {
-    const seriesRecord = ref({});
+    const seriesStore = useSeriesStore()
     const publishers = ref([]);
     const limitedSeries = ref(false);
     const title_id = ref(props.title_id);
     const logoExists = ref(false);
     const selectedVolume = ref(null);
 
+    // Get current series record from store
+    const seriesRecord = computed(() => {
+      if (seriesStore.records.length > 0) {
+        return seriesStore.records.find(series => series.title_id === props.title_id) || {}
+      }
+      return {}
+    })
+
     const fetchTitle = async () => {
       if (!props.title_id) return
-      const query = `?id=${props.title_id}`
-      const url = `http://localhost:3000/api/series${query}`
-      const data = await fetchWrapper.get(url)
-      seriesRecord.value = data.results[0]
-      limitedSeries.value = !!data.results[0].limited_series
+      
+      // First check if the series is already in the store
+      let currentSeries = seriesStore.records.find(series => series.title_id === props.title_id)
+      
+      // If not found, fetch it directly via API
+      if (!currentSeries) {
+        const query = `?id=${props.title_id}`
+        const url = `http://localhost:3000/api/series${query}`
+        const data = await fetchWrapper.get(url)
+        if (data.results && data.results.length > 0) {
+          currentSeries = data.results[0]
+          // Add it to the store records for consistency
+          seriesStore.records.push(currentSeries)
+        }
+      }
+      
+      if (currentSeries) {
+        limitedSeries.value = !!currentSeries.limited_series
+      }
     }
 
     const fetchPublishers = async () => {
@@ -219,12 +242,16 @@ export default {
       const url = `http://localhost:3000/api/stats${query}`;
       fetchWrapper.get(url)
         .then(data => {
-          seriesRecord.value.volume_count = data.volumes;
-          seriesRecord.value.issue_count = data.issues;
-          seriesRecord.value.copy_count = data.copies;
-          seriesRecord.value.series_cover_price = data.cprice;
-          seriesRecord.value.series_value = data.cvalue;
-          seriesRecord.value.series_value_change = data.cgain;
+          // Update the series in the store
+          const seriesIndex = seriesStore.records.findIndex(series => series.title_id === id)
+          if (seriesIndex !== -1) {
+            seriesStore.records[seriesIndex].volume_count = data.volumes;
+            seriesStore.records[seriesIndex].issue_count = data.issues;
+            seriesStore.records[seriesIndex].copy_count = data.copies;
+            seriesStore.records[seriesIndex].series_cover_price = data.cprice;
+            seriesStore.records[seriesIndex].series_value = data.cvalue;
+            seriesStore.records[seriesIndex].series_value_change = data.cgain;
+          }
         })
         .catch(err => console.error(err));
     }
@@ -232,12 +259,15 @@ export default {
     onMounted(async () => {
       await fetchTitle()
       await fetchPublishers()
-      logoExists.value = await checkImageExists(`/images/logos/${seriesRecord.value.logo}`)
+      if (seriesRecord.value.logo) {
+        logoExists.value = await checkImageExists(`/images/logos/${seriesRecord.value.logo}`)
+      }
     })
 
     return {
       publishers, seriesRecord, limitedSeries, logoExists, schema, title_id,
-      formatCurrency, formatPercentage, onSubmit, onInvalidSubmit, regenStats
+      formatCurrency, formatPercentage, onSubmit, onInvalidSubmit, regenStats,
+      seriesStore
     }
   }
 }

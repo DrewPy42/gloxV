@@ -18,7 +18,7 @@
             No Records Found
           </td>
         </tr>
-        <tr v-for="record in records" :key="volume_id">
+        <tr v-for="record in records" :key="record.volume_id">
           <td class='clickable'>
             <font-awesome-icon :icon="['fas', 'gear']" />
           </td>
@@ -49,18 +49,28 @@ export default {
   setup(props) {
     const title_id = ref(props.title_id)
     const records = ref([])
+    const loading = ref(false)
+    
     const fetchVolumes = async () => {
       if (!props.title_id) return;
-      const query = `?title_id=${props.title_id}`;
-      const url = `http://localhost:3000/api/volume${query}`;
-      const data = await fetchWrapper.get(url);
-      records.value = data.results;
+      loading.value = true
+      try {
+        const query = `?title_id=${props.title_id}`;
+        const url = `http://localhost:3000/api/volume${query}`;
+        const data = await fetchWrapper.get(url);
+        records.value = data.results;
+      } catch (error) {
+        console.error('Error fetching volumes:', error)
+      } finally {
+        loading.value = false
+      }
     }
+    
     onMounted(() => {
       fetchVolumes()
     })
 
-    return { records, formatDate }
+    return { records, loading, formatDate }
   }
 }
 </script>
