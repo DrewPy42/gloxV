@@ -1,12 +1,12 @@
 <template>
   <div>
     <h1>Series Dashboard</h1>
-    <div class="record-count">{{ message }}</div>
+    <div class="record-count">{{ seriesStore.message }}</div>
     <div class="pagination-container">
       <pagination
-        :total-pages="totalPages"
-        :current-page="currentPage"
-        @page-changed="changePage"
+        :total-pages="seriesStore.totalPages"
+        :current-page="seriesStore.currentPage"
+        @page-changed="seriesStore.changePage"
       />
     </div >
     <div class="table-responsive">
@@ -24,7 +24,7 @@
             <th scope="col" class="text-center">Copies</th>
           </tr>
         </thead>
-        <seriesItems :records="series"/>
+        <seriesItems :records="seriesStore.records"/>
       </table>
     </div>
   </div>
@@ -32,9 +32,9 @@
 
 <script>
 import Pagination from '@/components/dashboards/Pagination.vue';
-import { onMounted, ref, watchEffect } from "vue";
-import { fetchWrapper } from '@/core';
+import { onMounted } from "vue";
 import SeriesItems from '@/components/dashboards/series/seriesItems.vue';
+import { useSeriesStore } from '@/core/stores/seriesStore';
 
 export default {
   components: {
@@ -43,34 +43,13 @@ export default {
   },
   name: 'seriesHeader',
   setup() {
-    const message = ref('Loading series data...');
-    const series = ref([]);
-    const count = ref([]);
-    const currentPage = ref(1);
-    const totalPages = ref(1);
+    const seriesStore = useSeriesStore();
 
-    const fetchSeries = async () => {
-      const query = `?page=${currentPage.value}&limit=25`;
-      const url = `http://localhost:3000/api/series${query}`;
-      const data = await fetchWrapper.get(url);
-      series.value = data.results;
-      count.value = data.count[0].total;
-      totalPages.value = Math.ceil(count.value / 25);
-      message.value = `Found ${count.value} total records`;
-    }
-    onMounted(fetchSeries);
-
-    const changePage = (page) => {
-      currentPage.value = page
-    }
-    watchEffect(() =>
-    {
-      if (currentPage.value > 0) {
-        fetchSeries()
-      }
+    onMounted(() => {
+      seriesStore.fetchSeries();
     });
 
-    return { message, series, count, currentPage, totalPages, changePage }
+    return { seriesStore }
   }
 }
 
