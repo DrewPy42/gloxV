@@ -13,10 +13,12 @@ export const useSeriesStore = defineStore('series', () => {
   const actions = createDefaultActions(state)
 
   const fetchSeries = actions.fetchRecords
+  const fetchSeriesRecord = actions.fetchRecord
 
   return {
     ...state,
     ...actions,
-    fetchSeries
+    fetchSeries,
+    fetchSeriesRecord
   }
 })

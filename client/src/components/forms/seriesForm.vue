@@ -73,9 +73,9 @@
                   >
                     <option value="">Select Publisher</option>
                     <option
-                      v-for="publisher in publishers"
+                      v-for="publisher in publisherStore.records"
                       :key="publisher.publisher_id"
-                      :value="publisher.publisher_id"
+                      :value="Number(publisher.publisher_id)"
                     >{{ publisher.publisher_name }}
                     </option>
                   </Field>
@@ -164,6 +164,7 @@ import { useSeriesStore } from '@/core/stores/seriesStore'
 import * as yup from 'yup'
 import SeriesFormVolumes from '@/components/forms/seriesFormVolumes.vue'
 import SeriesFormIssues from '@/components/forms/seriesFormIssues.vue'
+import { usePublisherStore } from '@/core/stores/publisherStore'
 
 export default {
   components: { 
@@ -179,48 +180,26 @@ export default {
   },
   setup(props) {
     const seriesStore = useSeriesStore()
-    const publishers = ref([]);
+    const publisherStore = usePublisherStore()
     const limitedSeries = ref(false);
     const title_id = ref(props.title_id);
     const logoExists = ref(false);
     const selectedVolume = ref(null);
-
-    // Get current series record from store
-    const seriesRecord = computed(() => {
-      if (seriesStore.records.length > 0) {
-        return seriesStore.records.find(series => series.title_id === props.title_id) || {}
-      }
-      return {}
-    })
+    const seriesRecord = ref({})
 
     const fetchTitle = async () => {
       if (!props.title_id) return
       
-      // First check if the series is already in the store
-      let currentSeries = seriesStore.records.find(series => series.title_id === props.title_id)
-      
-      // If not found, fetch it directly via API
-      if (!currentSeries) {
-        const query = `?id=${props.title_id}`
-        const url = `http://localhost:3000/api/series${query}`
-        const data = await fetchWrapper.get(url)
-        if (data.results && data.results.length > 0) {
-          currentSeries = data.results[0]
-          // Add it to the store records for consistency
-          seriesStore.records.push(currentSeries)
-        }
-      }
+      const currentSeries = await seriesStore.fetchSeriesRecord(props.title_id)
       
       if (currentSeries) {
+        seriesRecord.value = currentSeries
         limitedSeries.value = !!currentSeries.limited_series
       }
     }
 
     const fetchPublishers = async () => {
-      const query = `?getall=true`
-      const url = `http://localhost:3000/api/publisher${query}`
-      const data = await fetchWrapper.get(url)
-      publishers.value = data.results
+      await publisherStore.fetchAllPublishers()
     }
 
     const schema = yup.object().shape({
@@ -242,7 +221,6 @@ export default {
       const url = `http://localhost:3000/api/stats${query}`;
       fetchWrapper.get(url)
         .then(data => {
-          // Update the series in the store
           const seriesIndex = seriesStore.records.findIndex(series => series.title_id === id)
           if (seriesIndex !== -1) {
             seriesStore.records[seriesIndex].volume_count = data.volumes;
@@ -257,17 +235,17 @@ export default {
     }
 
     onMounted(async () => {
-      await fetchTitle()
       await fetchPublishers()
+      await fetchTitle()
       if (seriesRecord.value.logo) {
         logoExists.value = await checkImageExists(`/images/logos/${seriesRecord.value.logo}`)
       }
     })
 
     return {
-      publishers, seriesRecord, limitedSeries, logoExists, schema, title_id,
+      seriesRecord, limitedSeries, logoExists, schema, title_id,
       formatCurrency, formatPercentage, onSubmit, onInvalidSubmit, regenStats,
-      seriesStore
+      seriesStore, publisherStore
     }
   }
 }

@@ -3,6 +3,7 @@ import { fetchWrapper, type ApiResponse } from '../functions/fetchWrapper'
 
 export interface DefaultActions {
   fetchRecords: (page?: number, limit?: number) => Promise<void>
+  fetchRecord: (id: number) => Promise<any>
   changePage: (page: number) => Promise<void>
   setSortOptions: (sortField: string, sortDirection?: string) => void
   setFilters: (filters: any[]) => void
@@ -34,6 +35,44 @@ export function createDefaultActions(state: defaultStore): DefaultActions {
     }
   }
 
+  const fetchRecord = async (id: number) => {
+    state.loading.value = true
+    state.message.value = `Loading ${state.recordType.value} record...`
+    
+    try {
+      // First check if the record is already in the store
+      const existingRecord = state.records.value.find((record: any) => record.title_id === id)
+      if (existingRecord) {
+        state.loading.value = false
+        state.message.value = `${state.recordType.value} record loaded from cache`
+        return existingRecord
+      }
+
+      // If not found, fetch it from the API
+      const query = `?id=${id}`
+      const url = `${state.baseURL.value}${query}`
+      const data = await fetchWrapper.get<ApiResponse>(url)
+      
+      if (data.results && data.results.length > 0) {
+        const record = data.results[0]
+        // Add it to the store records for consistency
+        state.records.value.push(record)
+        state.message.value = `${state.recordType.value} record loaded`
+        state.loading.value = false
+        return record
+      } else {
+        state.loading.value = false
+        state.message.value = `${state.recordType.value} record not found`
+        return null
+      }
+    } catch (error) {
+      state.loading.value = false
+      state.message.value = `Error loading ${state.recordType.value} record`
+      console.error(`Error fetching ${state.recordType.value} record:`, error)
+      return null
+    }
+  }
+
   const changePage = async (page: number) => {
     if (page !== state.currentPage.value && page > 0 && page <= state.totalPages.value) {
       await fetchRecords(page, state.perPage.value)
@@ -61,6 +100,7 @@ export function createDefaultActions(state: defaultStore): DefaultActions {
 
   return {
     fetchRecords,
+    fetchRecord,
     changePage,
     setSortOptions,
     setFilters,
