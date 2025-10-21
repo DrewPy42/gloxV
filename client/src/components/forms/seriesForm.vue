@@ -137,6 +137,7 @@
         <div class="card-header fw-bold">Volumes</div>
           <SeriesFormVolumes
             :title_id="title_id"
+            @volumeSelected="handleVolumeSelection"
           />
       </div>
       <div class="card w-100">
@@ -146,6 +147,7 @@
             :title_id="title_id"
             :volume_id="seriesRecord.volume_id"
             v-if="seriesRecord.volume_id"
+            @volumeSelected="handleVolumeSelection"
           />
           <div v-else class="alert alert-warning">
             <strong>Note: </strong> Select or create a volume to manage issues.
@@ -216,6 +218,11 @@ export default {
       console.log('Form invalid')
     }
 
+    function handleVolumeSelection(volumeRecord) {
+      selectedVolume.value = volumeRecord;
+      seriesRecord.value.volume_id = volumeRecord.volume_id;
+    }
+
     function regenStats(id) {
       const query = `?id=${id}`;
       const url = `http://localhost:3000/api/stats${query}`;
@@ -243,8 +250,8 @@ export default {
     })
 
     return {
-      seriesRecord, limitedSeries, logoExists, schema, title_id,
-      formatCurrency, formatPercentage, onSubmit, onInvalidSubmit, regenStats,
+      seriesRecord, limitedSeries, logoExists, schema, title_id, selectedVolume,
+      formatCurrency, formatPercentage, onSubmit, onInvalidSubmit, regenStats, handleVolumeSelection,
       seriesStore, publisherStore
     }
   }

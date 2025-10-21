@@ -18,10 +18,12 @@
             No Records Found
           </td>
         </tr>
-        <tr v-for="record in volumeStore.records" :key="record.volume_id">
-          <td class='clickable'>
-            <font-awesome-icon :icon="['fas', 'gear']" />
-          </td>
+        <tr
+          v-for="record in volumeStore.records"
+          :key="record.volume_id"
+          @click="$emit('volumeSelected', record)"
+        >
+          <td></td>
           <td class="text-center">{{ record.volume_number }}</td>
           <td class="text-center">{{ record.issue_range }}</td>
           <td class="text-center">{{ formatDate(record.start_date) }}</td>
