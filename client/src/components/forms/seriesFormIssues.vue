@@ -27,6 +27,7 @@
               :src="getCoverImage(record)"
               :alt="`Issue: ${record.issue_number} cover`"
               class="publisher-icon clickable"
+              @click="openCoverViewer(record)"
               @error="handleImageError($event)"
             />
           </td>
@@ -38,6 +39,13 @@
       </tbody>
     </table>
   </div>
+  <ArtViewer
+    v-model="showCoverViewer"
+    title="Cover Art"
+    :image-url="selectedCoverUrl"
+    action-text="Change Cover"
+    @action="handleCoverChange"
+  />
 </template>
 
 <script>
@@ -46,15 +54,22 @@ import { formatDate } from '@/core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import MenuDropdown from "../menus/menuDropdown.vue";
 import { useIssueStore } from '@/core/stores/issueStore'
+import ArtViewer from '../modals/artViewer.vue'
 
 export default {
   name: 'SeriesFormIssues',
+  components: {
+    ArtViewer
+  },
+  emits: ['volumeSelected'],
   props: {
     title_id: Number,
     volume_id: Number
   },
   setup(props) {
     const issueStore = useIssueStore()
+    const showCoverViewer = ref(false)
+    const selectedCoverUrl = ref('')
     
     const getCoverImage = (record) => {
       return record.cover_art_file 
@@ -73,6 +88,29 @@ export default {
         await issueStore.fetchIssuesByTitleId(props.title_id);
       }
     }
+
+    const openCoverViewer = (record) => {
+      selectedCoverUrl.value = getCoverImage(record);
+      showCoverViewer.value = true;
+    };
+
+    const handleCoverChange = async () => {
+      try {
+        // TODO: Implement cover change logic
+        // This could open a file picker, upload the new cover,
+        // and update the issue record
+        console.log('Changing cover for issue:', selectedIssue.value.issue_id)
+        
+        // After successful upload, you might want to refresh the issue data
+        // await issueStore.fetchByVolumeId(props.volume_id)
+        
+        // Close the viewer
+        showCoverViewer.value = false
+      } catch (error) {
+        console.error('Error updating cover:', error)
+      }
+    }
+
     onMounted(() => {
       fetchIssues()
     })
@@ -84,11 +122,25 @@ export default {
       }
     })
 
-    return { issueStore, formatDate, getCoverImage, handleImageError }
+    return { 
+      issueStore, 
+      formatDate, 
+      getCoverImage, 
+      handleImageError, 
+      handleCoverChange, 
+      openCoverViewer,
+      showCoverViewer, 
+      selectedCoverUrl 
+    }
   }
 }
 </script>
 
 <style scoped lang="scss">
+.relative-container {
+  position: relative;
+  min-height: 200px;
+}
+
 
 </style>

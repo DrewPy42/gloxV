@@ -1,10 +1,23 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';
-import router from './router/index';
+import router from './router';
+import vuetify from './plugins/vuetify';
+import { library, config } from '@fortawesome/fontawesome-svg-core';
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { fas } from '@fortawesome/free-solid-svg-icons';
+import { far } from '@fortawesome/free-regular-svg-icons';
 
+// Configure Font Awesome
+config.autoAddCss = false; // We'll handle the CSS ourselves
 
-// Polyfill for structuredClone in browser and Node.js environments.
+// Add Font Awesome icons to the library
+library.add(fas, far);
+
+// Add Font Awesome CSS
+import '@fortawesome/fontawesome-svg-core/styles.css';
+
+// Polyfill for structuredClone in browser and Node.js environments
 function structured_clone<T>(obj: T): T {
   return JSON.parse(JSON.stringify(obj));
 }
@@ -15,19 +28,19 @@ if (typeof window !== 'undefined' && typeof window.structuredClone === 'undefine
   (globalThis as any).structuredClone = structured_clone;
 }
 
+// Import global styles
+import '@/styles/main.scss';
 
-import '@/styles/main.scss'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
-import { library, config } from '@fortawesome/fontawesome-svg-core';
-import { fas } from '@fortawesome/free-solid-svg-icons';
-import { far } from '@fortawesome/free-regular-svg-icons';
+// Create and mount the app
+const app = createApp(App);
 
-library.add(fas);
-library.add(far);
-config.styleDefault = 'solid';
+// Register global components
+app.component('font-awesome-icon', FontAwesomeIcon);
 
-createApp(App)
-  .component('font-awesome-icon', FontAwesomeIcon)
-  .use(createPinia())
-  .use(router)
-  .mount('#app');
+// Use plugins
+app.use(createPinia());
+app.use(router);
+app.use(vuetify);
+
+// Mount the app
+app.mount('#app');

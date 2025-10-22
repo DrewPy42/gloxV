@@ -2,3 +2,32 @@
 @use 'bootstrap/scss/bootstrap';
 @use 'color-utilities';  // your extra .bg-wibbit-* classes
 @use 'overrides';        // custom buttons, cards, navbar, etc.
+
+// Font Awesome icon sizing
+.svg-inline--fa {
+  height: 1em;
+  width: 1em;
+  vertical-align: -0.125em;
+  
+  // Default size (matches Bootstrap's default text size)
+  font-size: 1rem;
+  
+  // Sizing variants to match Bootstrap's sizing utilities
+  &.fa-xs { font-size: 0.75rem; }
+  &.fa-sm { font-size: 0.875rem; }
+  &.fa-lg { font-size: 1.25rem; }
+  &.fa-2x { font-size: 1.5rem; }
+  &.fa-3x { font-size: 2rem; }
+  &.fa-4x { font-size: 2.5rem; }
+  &.fa-5x { font-size: 3rem; }
+  
+  // For buttons and other controls
+  .btn & {
+    margin-right: 0.25rem;
+    
+    &:last-child {
+      margin-right: 0;
+      margin-left: 0.25rem;
+    }
+  }
+}
