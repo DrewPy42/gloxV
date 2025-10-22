@@ -26,3 +26,8 @@ client/public/images/covers/uploads
 client/public/images/characters/uploads
 client/public/images/logos/uploads
 
+scripts/cover_reorganization.log
+scripts/organize_covers.js
+.gitignore
+scripts/update_cover_paths.sql
+sql/backup.sql

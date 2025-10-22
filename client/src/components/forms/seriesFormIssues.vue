@@ -58,7 +58,7 @@ export default {
     
     const getCoverImage = (record) => {
       return record.cover_art_file 
-        ? `/images/covers/${record.cover_art_file}`
+        ? `/images/covers/uploads/${record.cover_art_file}`
         : '/images/covers/missing_cover.svg';
     };
 

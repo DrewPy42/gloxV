@@ -16,7 +16,7 @@
       class="table-row"
       v-for="record in records"
       :key="record.id">
-      <td class='clickable' @click="toggleModal(record.title_id)"><a href="#">{{ record.title }}</a></td>
+      <td class='clickable'><a href="#" @click.prevent="toggleModal(record.title_id)">{{ record.title }}</a></td>
       <td class="text-center">
         <font-awesome-icon
           v-if="record.limited_series"
