@@ -1,8 +1,8 @@
 <template>
   <Transition name="modal">
     <div v-if="show" class="modal-mask">
-      <div class="modal-wrapper">
-        <div class="modal-container d-flex justify-content-between">
+      <div class="modal-wrapper" @click.self="closeAndExit">
+        <div class="modal-container d-flex justify-content-between" @click.stop>
           <div class="modal-items w-100">
             <div class="modal-header d-flex justify-content-end">
               <div>
@@ -47,11 +47,11 @@ export default {
     }
 
     function closeAndExit() {
-      emit('saveAndClose', 'true');
+      emit('saveAndClose', true);
     }
 
     function saveRecord() {
-      emit('saveAndClose', 'true');
+      emit('saveAndClose', true);
     }
 
     watchEffect(() => {

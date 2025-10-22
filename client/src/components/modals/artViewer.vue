@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="isOpen" max-width="800">
+  <v-dialog v-model="isOpen" max-width="800" class="top-modal">
     <v-card>
       <v-card-title>{{ title || 'Art Viewer' }}</v-card-title>
       <v-card-text class="text-center pa-4">
@@ -19,11 +19,6 @@
           <!-- Debug info -->
           <div v-if="error" class="error-message">
             {{ error }}
-          </div>
-          <div v-if="showDebugInfo" class="debug-info">
-            <div>Image URL: {{ currentImageUrl }}</div>
-            <div>Loading: {{ isLoading ? 'Yes' : 'No' }}</div>
-            <div>Error: {{ error || 'None' }}</div>
           </div>
         </div>
       </v-card-text>
@@ -48,118 +43,6 @@
     </v-card>
   </v-dialog>
 </template>
-
-<style scoped lang="scss">
-:deep(.v-overlay__content) {
-  z-index: 2500 !important;
-}
-
-:deep(.v-dialog) {
-  z-index: 2501 !important;
-  position: relative;
-  margin: 24px;
-  max-width: 90%;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.image-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 300px;
-  max-height: calc(90vh - 120px);
-  overflow: auto;
-  margin: 0 auto;
-  position: relative;
-  width: 100%;
-  padding: 20px;
-  
-  .no-image {
-    text-align: center;
-    color: #666;
-    padding: 2rem;
-    font-size: 1.1rem;
-    
-    svg {
-      opacity: 0.5;
-      margin-bottom: 1rem;
-    }
-  }
-  
-  .error-message {
-    color: #ff4444;
-    margin-top: 10px;
-    font-weight: bold;
-    text-align: center;
-    padding: 10px;
-    background: rgba(255, 0, 0, 0.1);
-    border-radius: 4px;
-  }
-  
-  .debug-info {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(0, 0, 0, 0.85);
-    color: white;
-    padding: 12px;
-    font-size: 12px;
-    text-align: left;
-    z-index: 10;
-    font-family: monospace;
-    max-height: 200px;
-    overflow: auto;
-    word-break: break-all;
-  }
-}
-
-.cover-image {
-  max-width: 100%;
-  max-height: calc(90vh - 160px);
-  object-fit: contain;
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  opacity: 1;
-  transition: opacity 0.3s ease;
-  background: #f5f5f5;
-  
-  &[loading] {
-    opacity: 0;
-  }
-}
-
-.v-card {
-  display: flex;
-  flex-direction: column;
-  max-height: 100%;
-  overflow: hidden;
-}
-
-.v-card-text {
-  flex: 1;
-  overflow: auto;
-  padding: 16px 24px;
-}
-
-.v-card-actions {
-  padding: 12px 24px;
-  background: #f8f9fa;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.v-btn {
-  text-transform: none;
-  letter-spacing: normal;
-  font-weight: 500;
-}
-</style>
-
 <script setup>
 import { ref, computed, watch } from 'vue';
 
@@ -192,7 +75,11 @@ const props = defineProps({
   closeText: String,
   actionText: String,
   imageClass: [String, Object, Array],
-  imageStyle: [String, Object, Array]
+  imageStyle: [String, Object, Array],
+  customClass: {
+    type: [String, Array, Object],
+    default: ''
+  }
 });
 
 const emit = defineEmits([
@@ -293,3 +180,6 @@ function handleImageError(e) {
   }
 }
 </script>
+<style scoped lang="scss">
+@use "@/styles/modals";
+</style>

@@ -61,7 +61,6 @@ export default {
   components: {
     ArtViewer
   },
-  emits: ['volumeSelected'],
   props: {
     title_id: Number,
     volume_id: Number
@@ -137,10 +136,5 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.relative-container {
-  position: relative;
-  min-height: 200px;
-}
-
-
+@use "@/styles/modals";
 </style>

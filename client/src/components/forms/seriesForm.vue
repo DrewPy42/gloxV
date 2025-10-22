@@ -135,10 +135,12 @@
       </Form>
       <div class="card w-50">
         <div class="card-header fw-bold">Volumes</div>
+        <div class="card-body">
           <SeriesFormVolumes
             :title_id="title_id"
             @volumeSelected="handleVolumeSelection"
           />
+        </div>
       </div>
       <div class="card w-100">
         <div class="card-header fw-bold">Issues</div>
@@ -147,7 +149,6 @@
             :title_id="title_id"
             :volume_id="seriesRecord.volume_id"
             v-if="seriesRecord.volume_id"
-            @volumeSelected="handleVolumeSelection"
           />
           <div v-else class="alert alert-warning">
             <strong>Note: </strong> Select or create a volume to manage issues.
