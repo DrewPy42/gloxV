@@ -179,7 +179,10 @@ export default {
   },
   name: 'SeriesForm',
   props: {
-    title_id: Number
+    title_id: {
+      type: Number,
+      default: null
+    }
   },
   setup(props) {
     const seriesStore = useSeriesStore()

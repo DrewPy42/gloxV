@@ -27,6 +27,11 @@
         <seriesItems :records="seriesStore.records"/>
       </table>
     </div>
+     <pagination
+        :total-pages="seriesStore.totalPages"
+        :current-page="seriesStore.currentPage"
+        @page-changed="seriesStore.changePage"
+      />
   </div>
 </template>
 
