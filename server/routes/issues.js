@@ -19,7 +19,8 @@ router.get("/api/issues", (req, res) => {
                             i.issue_price,
                             i.issue_value,
                             i.created_date,
-                            i.modified_date
+                            i.modified_date,
+                            i.issue_notes
                     FROM series_issue i
                         INNER JOIN series_volume v ON v.volume_id = i.volume_id`
 

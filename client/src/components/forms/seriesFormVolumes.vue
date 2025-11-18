@@ -28,7 +28,9 @@
           <td class="text-center">{{ record.issue_range }}</td>
           <td class="text-center">{{ formatDate(record.start_date) }}</td>
           <td class="text-center">{{ formatDate(record.end_date) }}</td>
-          <td>{{ record.notes }}</td>
+          <td class="text-center">
+            <NotesCell :record="record.notes" />
+          </td>
         </tr>
       </tbody>
     </table>
@@ -42,6 +44,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import MenuDropdown from "../menus/menuDropdown.vue";
 import { getVolumeEditDropDown } from '@/core';
 import { useVolumeStore } from '@/core/stores/volumeStore'
+import NotesCell from '../objects/notesCell.vue'
 
 export default {
   name: 'SeriesFormVolumes',
@@ -49,6 +52,9 @@ export default {
     title_id: Number
   },
   emits: ['volumeSelected'],
+  components: {
+    NotesCell
+  },
   setup(props) {
     const volumeStore = useVolumeStore()
     
@@ -63,7 +69,8 @@ export default {
 
     return { 
       volumeStore,
-      formatDate 
+      formatDate,
+      NotesCell 
     }
   }
 }

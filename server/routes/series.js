@@ -20,7 +20,8 @@ router.get("/api/series", (req, res) => {
                           p.publisher_id,
                           publisher_name,
                           logo,
-                          website
+                          website,
+                          series_notes
                    FROM series_title t
                             LEFT JOIN publisher p ON t.publisher_id = p.publisher_id`;
 

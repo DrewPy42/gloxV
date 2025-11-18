@@ -43,6 +43,9 @@
       <td class="text-center">{{ record.volume_count }}</td>
       <td class="text-center">{{ record.issue_count }}</td>
       <td class="text-center">{{ record.copy_count }}</td>
+      <td class="text-center">
+        <NotesCell :notes="record.series_notes" />
+      </td>
     </tr>
   </tbody>
 </template>
@@ -52,12 +55,14 @@ import { formatCurrency, formatPercentage, makeViewLink } from '@/core';
 import modalWrapper from '@/components/modals/modalWrapper.vue'
 import { ref } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import NotesCell from '@/components/objects/notesCell.vue'
 
 export default {
   name: 'seriesItems',
   components: {
     FontAwesomeIcon,
-    modalWrapper
+    modalWrapper,
+    NotesCell
   },
   props: {
     records: Array,
@@ -75,7 +80,7 @@ export default {
     }
 
     return { modalOpen, modalType, selectedID, formatCurrency, formatPercentage,
-      makeViewLink, toggleModal, modalWrapper }
+      makeViewLink, toggleModal, modalWrapper, NotesCell }
   }
 }
 

@@ -22,6 +22,7 @@
             <th scope="col" class="text-center">Volumes</th>
             <th scope="col" class="text-center">Issues</th>
             <th scope="col" class="text-center">Copies</th>
+            <th scope="col" class="text-center">Notes</th>
           </tr>
         </thead>
         <seriesItems :records="seriesStore.records"/>

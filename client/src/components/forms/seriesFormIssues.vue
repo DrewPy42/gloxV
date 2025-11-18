@@ -34,7 +34,9 @@
           <td class="text-center">{{ record.issue_number }}</td>
           <td class="text-center">{{ formatDate(record.issue_date) }}</td>
           <td class="text-center">{{ record.copy_count }}</td>
-          <td>{{ record.issue_notes }}</td>
+          <td class="text-center">
+            <NotesCell :record="record.issue_notes" />
+          </td>
         </tr>
       </tbody>
     </table>
@@ -55,11 +57,13 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import MenuDropdown from "../menus/menuDropdown.vue";
 import { useIssueStore } from '@/core/stores/issueStore'
 import ArtViewer from '../modals/artViewer.vue'
+import NotesCell from '../objects/notesCell.vue'
 
 export default {
   name: 'SeriesFormIssues',
   components: {
-    ArtViewer
+    ArtViewer,
+    NotesCell
   },
   props: {
     title_id: Number,
@@ -129,7 +133,8 @@ export default {
       handleCoverChange, 
       openCoverViewer,
       showCoverViewer, 
-      selectedCoverUrl 
+      selectedCoverUrl,
+      NotesCell
     }
   }
 }
