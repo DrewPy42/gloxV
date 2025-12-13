@@ -56,6 +56,7 @@ import { formatDate } from '@/core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import MenuDropdown from "../menus/menuDropdown.vue";
 import { useIssueStore } from '@/core/stores/issueStore'
+import { fetchWrapper } from '@/core/functions/fetchWrapper'
 import ArtViewer from '../modals/artViewer.vue'
 import NotesCell from '../objects/notesCell.vue'
 
@@ -73,6 +74,7 @@ export default {
     const issueStore = useIssueStore()
     const showCoverViewer = ref(false)
     const selectedCoverUrl = ref('')
+    const selectedIssue = ref(null)
     
     const getCoverImage = (record) => {
       return record.cover_art_file 
@@ -93,24 +95,53 @@ export default {
     }
 
     const openCoverViewer = (record) => {
+      selectedIssue.value = record;
       selectedCoverUrl.value = getCoverImage(record);
       showCoverViewer.value = true;
     };
 
     const handleCoverChange = async () => {
+      if (!selectedIssue.value) {
+        console.error('No issue selected');
+        return;
+      }
+
       try {
-        // TODO: Implement cover change logic
-        // This could open a file picker, upload the new cover,
-        // and update the issue record
-        console.log('Changing cover for issue:', selectedIssue.value.issue_id)
-        
-        // After successful upload, you might want to refresh the issue data
-        // await issueStore.fetchByVolumeId(props.volume_id)
-        
-        // Close the viewer
-        showCoverViewer.value = false
+        // Create a file input element
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+
+        // Handle file selection
+        fileInput.onchange = async (event) => {
+          const file = event.target.files?.[0];
+          if (!file) return;
+
+          try {
+            // Upload the file to the server
+            const uploadUrl = `http://localhost:3000/api/issues/${selectedIssue.value.issue_id}/cover`;
+            const response = await fetchWrapper.upload(uploadUrl, file, 'cover');
+
+            // Update the selected issue's cover in the local state
+            if (response.cover_art_file) {
+              selectedIssue.value.cover_art_file = response.cover_art_file;
+              selectedCoverUrl.value = getCoverImage(selectedIssue.value);
+            }
+
+            // Refresh the issues list to show the updated cover
+            await fetchIssues();
+
+            console.log('Cover updated successfully');
+          } catch (error) {
+            console.error('Error uploading cover:', error);
+            alert('Failed to upload cover image. Please try again.');
+          }
+        };
+
+        // Trigger the file picker
+        fileInput.click();
       } catch (error) {
-        console.error('Error updating cover:', error)
+        console.error('Error initiating cover change:', error);
       }
     }
 
