@@ -75,11 +75,13 @@ export default {
     const showCoverViewer = ref(false)
     const selectedCoverUrl = ref('')
     const selectedIssue = ref(null)
-    
-    const getCoverImage = (record) => {
-      return record.cover_art_file 
-        ? `/images/covers/uploads/${record.cover_art_file}`
-        : '/images/covers/missing_cover.svg';
+
+    const getCoverImage = (record, bustCache = false) => {
+      if (!record.cover_art_file) {
+        return '/images/covers/missing_cover.svg';
+      }
+      const baseUrl = `/images/covers/uploads/${record.cover_art_file}`;
+      return bustCache ? `${baseUrl}?t=${Date.now()}` : baseUrl;
     };
 
     const handleImageError = (event) => {
@@ -125,7 +127,8 @@ export default {
             // Update the selected issue's cover in the local state
             if (response.cover_art_file) {
               selectedIssue.value.cover_art_file = response.cover_art_file;
-              selectedCoverUrl.value = getCoverImage(selectedIssue.value);
+              // Use cache-busting to ensure the new image is displayed
+              selectedCoverUrl.value = getCoverImage(selectedIssue.value, true);
             }
 
             // Refresh the issues list to show the updated cover
