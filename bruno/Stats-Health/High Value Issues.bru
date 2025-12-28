@@ -1,0 +1,20 @@
+meta {
+  name: High Value Issues
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{ServerHost}}/api/stats/high-value?limit=10
+  body: none
+  auth: inherit
+}
+
+params:query {
+  limit: 10
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

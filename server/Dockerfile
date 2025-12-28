@@ -7,15 +7,18 @@ WORKDIR /app
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install dependencies
+# Install dependencies (including devDependencies for build)
 RUN npm install
 
 # Copy the application code
 COPY . .
 
+# Build TypeScript
+RUN npm run build
+
 # Expose the application port
 EXPOSE 3000
 
 # Start the application
-# CMD ["npm", "run", "dev"]
-CMD ["npx", "nodemon", "server.js"]
+# CMD ["npm", "start"]
+CMD ["npm", "run", "dev"]

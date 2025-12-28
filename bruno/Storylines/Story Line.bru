@@ -1,0 +1,16 @@
+meta {
+  name: Story Line
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{ServerHost}}/api/storylines/70
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
