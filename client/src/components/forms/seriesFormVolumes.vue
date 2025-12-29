@@ -29,7 +29,7 @@
           <td class="text-center">{{ formatDate(record.start_date) }}</td>
           <td class="text-center">{{ formatDate(record.end_date) }}</td>
           <td class="text-center">
-            <NotesCell :record="record.notes" />
+            <NotesCell :notes="record.notes" />
           </td>
         </tr>
       </tbody>
@@ -38,29 +38,34 @@
 </template>
 
 <script>
-import { onMounted, ref, computed } from 'vue'
-import { formatDate } from '@/core'
+import { onMounted } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import MenuDropdown from "../menus/menuDropdown.vue";
-import { getVolumeEditDropDown } from '@/core';
-import { useVolumeStore } from '@/core/stores/volumeStore'
+import { useVolumeStore } from '@/core/stores'
 import NotesCell from '../objects/notesCell.vue'
+import { useFormatting } from '@/composables'
 
 export default {
   name: 'SeriesFormVolumes',
   props: {
-    title_id: Number
+    title_id: Number,
+    series_id: Number
   },
   emits: ['volumeSelected'],
   components: {
+    FontAwesomeIcon,
     NotesCell
   },
   setup(props) {
     const volumeStore = useVolumeStore()
+    const { formatDate } = useFormatting()
     
     const fetchVolumes = async () => {
-      if (!props.title_id) return;
-      await volumeStore.fetchVolumesByTitleId(props.title_id);
+      const seriesId = props.series_id || props.title_id
+      if (!seriesId) return
+      await volumeStore.fetchRecords({ 
+        filters: { series_id: seriesId },
+        limit: 100
+      })
     }
     
     onMounted(() => {
@@ -69,13 +74,11 @@ export default {
 
     return { 
       volumeStore,
-      formatDate,
-      NotesCell 
+      formatDate
     }
   }
 }
 </script>
 
 <style scoped lang="scss">
-
 </style>

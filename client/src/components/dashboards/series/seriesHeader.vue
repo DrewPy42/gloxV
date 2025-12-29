@@ -6,7 +6,7 @@
       <pagination
         :total-pages="seriesStore.totalPages"
         :current-page="seriesStore.currentPage"
-        @page-changed="seriesStore.changePage"
+        @page-changed="seriesStore.setPage"
       />
     </div >
     <div class="table-responsive">
@@ -31,7 +31,7 @@
      <pagination
         :total-pages="seriesStore.totalPages"
         :current-page="seriesStore.currentPage"
-        @page-changed="seriesStore.changePage"
+        @page-changed="seriesStore.setPage"
       />
   </div>
 </template>
@@ -40,7 +40,7 @@
 import Pagination from '@/components/dashboards/Pagination.vue';
 import { onMounted } from "vue";
 import SeriesItems from '@/components/dashboards/series/seriesItems.vue';
-import { useSeriesStore } from '@/core/stores/seriesStore';
+import { useSeriesStore } from '@/core/stores';
 
 export default {
   components: {
@@ -52,7 +52,7 @@ export default {
     const seriesStore = useSeriesStore();
 
     onMounted(() => {
-      seriesStore.fetchSeries();
+      seriesStore.fetchRecords();
     });
 
     return { seriesStore }

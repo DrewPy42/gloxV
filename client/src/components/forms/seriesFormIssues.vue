@@ -32,10 +32,10 @@
             />
           </td>
           <td class="text-center">{{ record.issue_number }}</td>
-          <td class="text-center">{{ formatDate(record.issue_date) }}</td>
+          <td class="text-center">{{ formatDate(record.cover_date || record.issue_date) }}</td>
           <td class="text-center">{{ record.copy_count }}</td>
           <td class="text-center">
-            <NotesCell :record="record.issue_notes" />
+            <NotesCell :notes="record.notes || record.issue_notes" />
           </td>
         </tr>
       </tbody>
@@ -52,99 +52,99 @@
 
 <script>
 import { onMounted, ref, watch } from 'vue'
-import { formatDate } from '@/core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import MenuDropdown from "../menus/menuDropdown.vue";
-import { useIssueStore } from '@/core/stores/issueStore'
-import { fetchWrapper } from '@/core/functions/fetchWrapper'
+import { useIssueStore, fetchWrapper } from '@/core'
+import { useFormatting } from '@/composables'
 import ArtViewer from '../modals/artViewer.vue'
 import NotesCell from '../objects/notesCell.vue'
 
 export default {
   name: 'SeriesFormIssues',
   components: {
+    FontAwesomeIcon,
     ArtViewer,
     NotesCell
   },
   props: {
     title_id: Number,
+    series_id: Number,
     volume_id: Number
   },
   setup(props) {
     const issueStore = useIssueStore()
+    const { formatDate } = useFormatting()
     const showCoverViewer = ref(false)
     const selectedCoverUrl = ref('')
     const selectedIssue = ref(null)
 
     const getCoverImage = (record, bustCache = false) => {
-      if (!record.cover_art_file) {
-        return '/images/covers/missing_cover.svg';
+      // New schema uses cover_image_path, old used cover_art_file
+      const coverFile = record.cover_image_path || record.cover_art_file
+      if (!coverFile) {
+        return '/images/covers/missing_cover.svg'
       }
-      const baseUrl = `/images/covers/uploads/${record.cover_art_file}`;
-      return bustCache ? `${baseUrl}?t=${Date.now()}` : baseUrl;
-    };
+      const baseUrl = coverFile.startsWith('/') ? coverFile : `/images/covers/uploads/${coverFile}`
+      return bustCache ? `${baseUrl}?t=${Date.now()}` : baseUrl
+    }
 
     const handleImageError = (event) => {
-      event.target.src = '/images/covers/missing_cover.svg';
-    };
+      event.target.src = '/images/covers/missing_cover.svg'
+    }
 
     const fetchIssues = async () => {
+      const filters = {}
       if (props.volume_id) {
-        await issueStore.fetchIssuesByVolumeId(props.volume_id);
-      } else if (props.title_id) {
-        await issueStore.fetchIssuesByTitleId(props.title_id);
+        filters.volume_id = props.volume_id
+      } else if (props.series_id || props.title_id) {
+        filters.series_id = props.series_id || props.title_id
+      }
+      
+      if (Object.keys(filters).length > 0) {
+        await issueStore.fetchRecords({ filters, limit: 200 })
       }
     }
 
     const openCoverViewer = (record) => {
-      selectedIssue.value = record;
-      selectedCoverUrl.value = getCoverImage(record);
-      showCoverViewer.value = true;
-    };
+      selectedIssue.value = record
+      selectedCoverUrl.value = getCoverImage(record)
+      showCoverViewer.value = true
+    }
 
     const handleCoverChange = async () => {
       if (!selectedIssue.value) {
-        console.error('No issue selected');
-        return;
+        console.error('No issue selected')
+        return
       }
 
       try {
-        // Create a file input element
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = 'image/*';
+        const fileInput = document.createElement('input')
+        fileInput.type = 'file'
+        fileInput.accept = 'image/*'
 
-        // Handle file selection
         fileInput.onchange = async (event) => {
-          const file = event.target.files?.[0];
-          if (!file) return;
+          const file = event.target.files?.[0]
+          if (!file) return
 
           try {
-            // Upload the file to the server
-            const uploadUrl = `http://localhost:3000/api/issues/${selectedIssue.value.issue_id}/cover`;
-            const response = await fetchWrapper.upload(uploadUrl, file, 'cover');
+            const uploadUrl = `http://localhost:3000/api/issues/${selectedIssue.value.issue_id}/cover`
+            const response = await fetchWrapper.upload(uploadUrl, file, 'cover')
 
-            // Update the selected issue's cover in the local state
-            if (response.cover_art_file) {
-              selectedIssue.value.cover_art_file = response.cover_art_file;
-              // Use cache-busting to ensure the new image is displayed
-              selectedCoverUrl.value = getCoverImage(selectedIssue.value, true);
+            if (response.cover_image_path || response.cover_art_file) {
+              selectedIssue.value.cover_image_path = response.cover_image_path || response.cover_art_file
+              selectedCoverUrl.value = getCoverImage(selectedIssue.value, true)
             }
 
-            // Refresh the issues list to show the updated cover
-            await fetchIssues();
-
-            console.log('Cover updated successfully');
+            await fetchIssues()
+            console.log('Cover updated successfully')
           } catch (error) {
-            console.error('Error uploading cover:', error);
-            alert('Failed to upload cover image. Please try again.');
+            console.error('Error uploading cover:', error)
+            alert('Failed to upload cover image. Please try again.')
           }
-        };
+        }
 
-        // Trigger the file picker
-        fileInput.click();
+        fileInput.click()
       } catch (error) {
-        console.error('Error initiating cover change:', error);
+        console.error('Error initiating cover change:', error)
       }
     }
 
@@ -152,7 +152,6 @@ export default {
       fetchIssues()
     })
 
-    // Watch for volume_id changes to refetch issues
     watch(() => props.volume_id, (newVolumeId) => {
       if (newVolumeId) {
         fetchIssues()
@@ -167,8 +166,7 @@ export default {
       handleCoverChange, 
       openCoverViewer,
       showCoverViewer, 
-      selectedCoverUrl,
-      NotesCell
+      selectedCoverUrl
     }
   }
 }

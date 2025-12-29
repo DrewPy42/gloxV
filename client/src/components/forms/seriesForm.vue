@@ -1,268 +1,445 @@
 <template>
-  <div>
-    <div>
-      <Form
-        @submit="onSubmit"
-        @invalid-submit="onInvalidSubmit"
-        :validation-schema="schema"
-        v-slot="{ errors, isSubmitting }"
-      >
-        <div class="card-group">
-          <div class="card w-75">
-            <div class="card-header fw-bold">Series Details</div>
-            <div class="card-body">
-              <div class="form-group mx-3">
-                <div class="input-block input-group my-1">
-                  <label
-                    class="input-label input-group-text col-4"
-                    for="series_title"
-                  >Title</label>
-                  <Field
-                    type="text"
-                    id="series_title"
-                    name="series_title"
-                    v-model="seriesRecord.title"
-                    rules="required"
-                    class="form-control form-input"
-                    :class="{ 'is-invalid': errors['series_title'] }"
-                  />
-                </div>
-                <ErrorMessage class="red" name="series_title" />
-                <div class="input-block input-group my-1">
-                  <label
-                    class="input-label input-group-text col-4"
-                    for="sort_title"
-                  >Sorting Title</label>
-                  <Field
-                    type="text"
-                    id="sort_title"
-                    name="sort_title"
-                    v-model="seriesRecord.sort_title"
-                    class="form-control form-input"
-                    :class="{ 'is-invalid': errors['sort_title'] }"
-                  />
-                </div>
-                <ErrorMessage class="red" name="sort_title" />
-                <div class="input-block input-group my-1">
-                  <label
-                    class="input-label input-group-text col-4"
-                    for="limited_series"
-                  >Limited Series</label>
-                  <input
-                    type="checkbox"
-                    id="limited_series"
-                    name="limited_series"
-                    v-model="limitedSeries"
-                    class="form-check-input"
-                    :class="{ 'is-invalid': errors['limited_series'] }"
-                  />
-                </div>
-                <ErrorMessage class="red" name="limited_series" />
-                <div class="input-block input-group my-1">
-                  <label
-                    class="input-label input-group-text col-4"
-                    for="series_publisher"
-                  >Publisher</label>
-                  <Field
-                    as="select"
-                    id="series_publisher"
-                    name="series_publisher"
-                    v-model="seriesRecord.publisher_id"
-                    class="form-control form-input"
-                    :class="{ 'is-invalid': errors['series_publisher'] }"
-                  >
-                    <option value="">Select Publisher</option>
-                    <option
-                      v-for="publisher in publisherStore.records"
-                      :key="publisher.publisher_id"
-                      :value="Number(publisher.publisher_id)"
-                    >{{ publisher.publisher_name }}
-                    </option>
-                  </Field>
-                </div>
-                <ErrorMessage class="red" name="series_publisher" />
-              </div>
-              <div class="card-img-bottom>">
-                <img
-                  v-if="logoExists"
-                  :src="`/images/logos/${seriesRecord.logo}`"
-                  :alt="`${seriesRecord.publisher_name} logo`"
-                  class="publisher-logo-small rounded mx-3"
-                />
-                <font-awesome-icon
-                  v-else
-                  :icon="['fas', 'file-circle-question']"
-                  class="red-icon no-logo rounded mx-3"
-                />
-              </div>
+  <div class="series-form">
+    <div class="row">
+      <!-- Main Details Column -->
+      <div class="col-md-8">
+        <Card title="Series Details">
+          <div class="row">
+            <div class="col-md-8">
+              <FormField
+                v-model="formData.title"
+                label="Title"
+                :required="true"
+                :disabled="!isEditing"
+                :error-message="errors.title"
+              />
+            </div>
+            <div class="col-md-4">
+              <FormField
+                v-model="formData.sort_title"
+                label="Sort Title"
+                :disabled="!isEditing"
+                help-text="Leave blank to use main title"
+              />
             </div>
           </div>
-          <div class="stats-block card w-25">
-            <div class="card-header fw-bold">Series Stats</div>
-            <div class="card-body">
-              <div class="input-block input-group m-1">
-                <div class="input-label input-group-text col-3">Volumes</div>
-                <div class="form-control form-input">{{ seriesRecord.volume_count }}</div>
-              </div>
-              <div class="input-block input-group m-1">
-                <div class="input-label input-group-text col-3">Issues</div>
-                <div class="form-control form-input">{{ seriesRecord.issue_count }}</div>
-              </div>
-              <div class="input-block input-group m-1">
-                <div class="input-label input-group-text col-3">Copies</div>
-                <div class="form-control form-input">{{ seriesRecord.copy_count }}</div>
-              </div>
-              <div class="input-block input-group m-1">
-                <div class="input-label input-group-text col-3">Total Price</div>
-                <div class="form-control form-input">{{ formatCurrency(seriesRecord.series_cover_price) }}</div>
-              </div>
-              <div class="input-block input-group m-1">
-                <div class="input-label input-group-text col-3">Total Value</div>
-                <div class="form-control form-input">{{ formatCurrency(seriesRecord.series_value) }}</div>
-              </div>
-              <div class="input-block input-group m-1">
-                <div class="input-label input-group-text col-3">Value Gain</div>
-                <div class="form-control form-input">{{ formatPercentage(seriesRecord.series_value_change) }}</div>
-              </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <FormField
+                v-model="formData.publisher_id"
+                type="select"
+                label="Publisher"
+                :options="publisherOptions"
+                :disabled="!isEditing"
+                placeholder="Select Publisher"
+              />
             </div>
-            <div class="card-footer text-end">
-              <a href="#"
-                 @click.prevent="regenStats(seriesRecord.title_id)"
-                 class="btn btn-primary">Regenerate Stats</a>
+            <div class="col-md-3">
+              <FormField
+                v-model="formData.is_limited_series"
+                type="checkbox"
+                label="Series Type"
+                checkbox-label="Limited Series"
+                :disabled="!isEditing"
+              />
+            </div>
+            <div class="col-md-3">
+              <FormField
+                v-if="formData.is_limited_series"
+                v-model="formData.limited_series_count"
+                type="number"
+                label="Issue Count"
+                :min="1"
+                :disabled="!isEditing"
+              />
             </div>
           </div>
-        </div>
-      </Form>
-      <div class="card w-50">
-        <div class="card-header fw-bold">Volumes</div>
-        <div class="card-body">
-          <SeriesFormVolumes
-            :title_id="title_id"
-            @volumeSelected="handleVolumeSelection"
+
+          <FormField
+            v-model="formData.notes"
+            type="textarea"
+            label="Notes"
+            :rows="3"
+            :disabled="!isEditing"
           />
-        </div>
+        </Card>
+
+        <!-- Volumes Section -->
+        <Card title="Volumes" v-if="series.series_id">
+          <template #header-actions>
+            <button 
+              v-if="isEditing" 
+              class="btn btn-sm btn-primary"
+              @click="addVolume"
+            >
+              <font-awesome-icon :icon="['fas', 'plus']" /> Add Volume
+            </button>
+          </template>
+          
+          <div v-if="volumes.length === 0" class="text-muted text-center py-3">
+            No volumes found
+          </div>
+          <div v-else class="volume-list">
+            <div 
+              v-for="volume in volumes" 
+              :key="volume.volume_id"
+              class="volume-item"
+              :class="{ active: selectedVolumeId === volume.volume_id }"
+              @click="selectVolume(volume)"
+            >
+              <span class="volume-number">Vol. {{ volume.volume_number }}</span>
+              <span class="volume-issues">{{ volume.issue_count || 0 }} issues</span>
+            </div>
+          </div>
+        </Card>
+
+        <!-- Issues Section -->
+        <Card title="Issues" v-if="selectedVolumeId">
+          <template #header-actions>
+            <button 
+              v-if="isEditing" 
+              class="btn btn-sm btn-primary"
+              @click="addIssue"
+            >
+              <font-awesome-icon :icon="['fas', 'plus']" /> Add Issue
+            </button>
+          </template>
+          
+          <DataTable
+            :records="issues"
+            :columns="issueColumns"
+            :loading="loadingIssues"
+            :paginated="false"
+            :show-header="false"
+            :show-footer="false"
+            :show-actions="isEditing"
+            :actions="['edit', 'delete']"
+            id-field="issue_id"
+            entity-name="issues"
+            @edit="editIssue"
+            @delete="deleteIssue"
+          >
+            <template #cell-cover_image_path="{ record }">
+              <img
+                v-if="record.cover_image_path"
+                :src="getCoverImageUrl(record.cover_image_path)"
+                alt="Cover"
+                class="issue-cover-thumb"
+              />
+            </template>
+          </DataTable>
+        </Card>
       </div>
-      <div class="card w-100">
-        <div class="card-header fw-bold">Issues</div>
-        <div class="card-body">
-          <SeriesFormIssues
-            :title_id="title_id"
-            :volume_id="seriesRecord.volume_id"
-            v-if="seriesRecord.volume_id"
-          />
-          <div v-else class="alert alert-warning">
-            <strong>Note: </strong> Select or create a volume to manage issues.
+
+      <!-- Stats Column -->
+      <div class="col-md-4">
+        <Card title="Statistics" v-if="series.series_id">
+          <div class="stats-grid">
+            <StatCard
+              :value="stats.volume_count || 0"
+              label="Volumes"
+              icon="layer-group"
+              variant="info"
+              type="number"
+            />
+            <StatCard
+              :value="stats.issue_count || 0"
+              label="Issues"
+              icon="book"
+              variant="info"
+              type="number"
+            />
+            <StatCard
+              :value="stats.copy_count || 0"
+              label="Copies"
+              icon="copy"
+              variant="info"
+              type="number"
+            />
+            <StatCard
+              :value="stats.total_cost || 0"
+              label="Total Cost"
+              icon="receipt"
+              variant="warning"
+              type="currency"
+            />
+            <StatCard
+              :value="stats.total_value || 0"
+              label="Total Value"
+              icon="dollar-sign"
+              variant="success"
+              type="currency"
+            />
+            <StatCard
+              :value="valueChangePercent"
+              label="Value Change"
+              icon="chart-line"
+              :variant="valueChangePercent >= 0 ? 'success' : 'danger'"
+              type="percentage"
+            />
           </div>
-        </div>
+
+          <div class="text-center mt-3">
+            <button 
+              class="btn btn-outline-secondary btn-sm"
+              @click="refreshStats"
+              :disabled="loadingStats"
+            >
+              <font-awesome-icon :icon="['fas', 'arrows-rotate']" :spin="loadingStats" />
+              Refresh Stats
+            </button>
+          </div>
+        </Card>
+
+        <Card title="Publisher" v-if="series.publisher_name">
+          <div class="publisher-info text-center">
+            <img
+              v-if="series.logo_path"
+              :src="getLogoImageUrl(series.logo_path)"
+              :alt="series.publisher_name"
+              class="publisher-logo mb-2"
+            />
+            <h6>{{ series.publisher_name }}</h6>
+            <a 
+              v-if="series.website" 
+              :href="series.website" 
+              target="_blank"
+              class="small"
+            >
+              Visit Website
+            </a>
+          </div>
+        </Card>
       </div>
     </div>
   </div>
 </template>
 
-<script>
-import { ref, onMounted, computed } from 'vue'
-import { ErrorMessage, Field, Form } from 'vee-validate'
-import { formatCurrency, formatPercentage, checkImageExists, fetchWrapper } from '@/core'
-import { useSeriesStore } from '@/core/stores/seriesStore'
-import * as yup from 'yup'
-import SeriesFormVolumes from '@/components/forms/seriesFormVolumes.vue'
-import SeriesFormIssues from '@/components/forms/seriesFormIssues.vue'
-import { usePublisherStore } from '@/core/stores/publisherStore'
+<script setup lang="ts">
+import { ref, computed, watch, onMounted } from 'vue'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { Card, FormField, StatCard, DataTable, type TableColumn } from '@/components/common'
+import { useVolumeStore, useIssueStore, useStatsStore, type Series, type Volume, type Issue } from '@/core'
+import { useImage } from '@/composables'
 
-export default {
-  components: { 
-    ErrorMessage,
-    Form,
-    Field,
-    SeriesFormVolumes,
-    SeriesFormIssues
-  },
-  name: 'SeriesForm',
-  props: {
-    title_id: {
-      type: Number,
-      default: null
-    }
-  },
-  setup(props) {
-    const seriesStore = useSeriesStore()
-    const publisherStore = usePublisherStore()
-    const limitedSeries = ref(false);
-    const title_id = ref(props.title_id);
-    const logoExists = ref(false);
-    const selectedVolume = ref(null);
-    const seriesRecord = ref({})
+// ============================================================================
+// Props & Emits
+// ============================================================================
 
-    const fetchTitle = async () => {
-      if (!props.title_id) return
-      
-      const currentSeries = await seriesStore.fetchSeriesRecord(props.title_id)
-      
-      if (currentSeries) {
-        seriesRecord.value = currentSeries
-        limitedSeries.value = !!currentSeries.limited_series
-      }
-    }
+interface Props {
+  series: Series
+  isEditing?: boolean
+  publishers?: any[]
+}
 
-    const fetchPublishers = async () => {
-      await publisherStore.fetchAllPublishers()
-    }
+const props = withDefaults(defineProps<Props>(), {
+  isEditing: false,
+  publishers: () => []
+})
 
-    const schema = yup.object().shape({
-      series_title: yup.string().required(),
-      series_publisher: yup.string().required(),
-      limited_series: yup.boolean()
-    })
+const emit = defineEmits<{
+  (e: 'update', data: Partial<Series>): void
+}>()
 
-    function onSubmit() {
-      console.log('Form submitted')
-    }
+// ============================================================================
+// Stores & Composables
+// ============================================================================
 
-    function onInvalidSubmit() {
-      console.log('Form invalid')
-    }
+const volumeStore = useVolumeStore()
+const issueStore = useIssueStore()
+const statsStore = useStatsStore()
+const { getCoverImageUrl, getLogoImageUrl } = useImage()
 
-    function handleVolumeSelection(volumeRecord) {
-      selectedVolume.value = volumeRecord;
-      seriesRecord.value.volume_id = volumeRecord.volume_id;
-    }
+// ============================================================================
+// State
+// ============================================================================
 
-    function regenStats(id) {
-      const query = `?id=${id}`;
-      const url = `http://localhost:3000/api/stats${query}`;
-      fetchWrapper.get(url)
-        .then(data => {
-          const seriesIndex = seriesStore.records.findIndex(series => series.title_id === id)
-          if (seriesIndex !== -1) {
-            seriesStore.records[seriesIndex].volume_count = data.volumes;
-            seriesStore.records[seriesIndex].issue_count = data.issues;
-            seriesStore.records[seriesIndex].copy_count = data.copies;
-            seriesStore.records[seriesIndex].series_cover_price = data.cprice;
-            seriesStore.records[seriesIndex].series_value = data.cvalue;
-            seriesStore.records[seriesIndex].series_value_change = data.cgain;
-          }
-        })
-        .catch(err => console.error(err));
-    }
+const formData = ref<Partial<Series>>({})
+const errors = ref<Record<string, string>>({})
+const volumes = ref<Volume[]>([])
+const issues = ref<Issue[]>([])
+const stats = ref<any>({})
+const selectedVolumeId = ref<number | null>(null)
+const loadingIssues = ref(false)
+const loadingStats = ref(false)
 
-    onMounted(async () => {
-      await fetchPublishers()
-      await fetchTitle()
-      if (seriesRecord.value.logo) {
-        logoExists.value = await checkImageExists(`/images/logos/${seriesRecord.value.logo}`)
-      }
-    })
+// ============================================================================
+// Computed
+// ============================================================================
 
-    return {
-      seriesRecord, limitedSeries, logoExists, schema, title_id, selectedVolume,
-      formatCurrency, formatPercentage, onSubmit, onInvalidSubmit, regenStats, handleVolumeSelection,
-      seriesStore, publisherStore
-    }
+const publisherOptions = computed(() => 
+  props.publishers.map(p => ({
+    value: p.publisher_id,
+    label: p.publisher_name
+  }))
+)
+
+const valueChangePercent = computed(() => {
+  if (!stats.value.total_cost || stats.value.total_cost === 0) return 0
+  return (stats.value.total_value - stats.value.total_cost) / stats.value.total_cost
+})
+
+const issueColumns: TableColumn[] = [
+  { key: 'cover_image_path', label: '', width: '50px' },
+  { key: 'issue_number', label: '#', width: '60px' },
+  { key: 'issue_title', label: 'Title' },
+  { key: 'cover_date', label: 'Date', type: 'date' }
+]
+
+// ============================================================================
+// Methods
+// ============================================================================
+
+const loadVolumes = async () => {
+  if (!props.series.series_id) return
+  
+  await volumeStore.fetchRecords({ 
+    filters: { series_id: props.series.series_id },
+    limit: 100
+  })
+  volumes.value = volumeStore.records
+  
+  // Auto-select first volume
+  if (volumes.value.length > 0 && !selectedVolumeId.value) {
+    selectVolume(volumes.value[0])
   }
 }
 
+const loadIssues = async (volumeId: number) => {
+  loadingIssues.value = true
+  await issueStore.fetchRecords({
+    filters: { volume_id: volumeId },
+    limit: 200
+  })
+  issues.value = issueStore.records
+  loadingIssues.value = false
+}
+
+const loadStats = async () => {
+  if (!props.series.series_id) return
+  
+  loadingStats.value = true
+  const data = await statsStore.fetchSeriesStats(props.series.series_id)
+  if (data) {
+    stats.value = data
+  }
+  loadingStats.value = false
+}
+
+const refreshStats = () => {
+  loadStats()
+}
+
+const selectVolume = (volume: Volume) => {
+  selectedVolumeId.value = volume.volume_id
+  loadIssues(volume.volume_id)
+}
+
+const addVolume = () => {
+  // TODO: Open volume add modal
+  console.log('Add volume')
+}
+
+const addIssue = () => {
+  // TODO: Open issue add modal
+  console.log('Add issue')
+}
+
+const editIssue = (issue: Issue) => {
+  // TODO: Open issue edit modal
+  console.log('Edit issue', issue)
+}
+
+const deleteIssue = (issue: Issue) => {
+  // TODO: Confirm and delete issue
+  console.log('Delete issue', issue)
+}
+
+// ============================================================================
+// Watchers
+// ============================================================================
+
+watch(() => props.series, (newSeries) => {
+  formData.value = { ...newSeries }
+}, { immediate: true })
+
+watch(formData, (newData) => {
+  emit('update', newData)
+}, { deep: true })
+
+// ============================================================================
+// Lifecycle
+// ============================================================================
+
+onMounted(() => {
+  if (props.series.series_id) {
+    loadVolumes()
+    loadStats()
+  }
+})
 </script>
 
 <style scoped lang="scss">
-@use "@/styles/forms.scss";
+.series-form {
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .volume-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .volume-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+      border-color: #0d6efd;
+      background-color: rgba(13, 110, 253, 0.05);
+    }
+
+    &.active {
+      border-color: #0d6efd;
+      background-color: rgba(13, 110, 253, 0.1);
+    }
+
+    .volume-number {
+      font-weight: 600;
+    }
+
+    .volume-issues {
+      font-size: 0.75rem;
+      color: #6c757d;
+    }
+  }
+
+  .issue-cover-thumb {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .publisher-logo {
+    max-height: 60px;
+    max-width: 120px;
+    object-fit: contain;
+  }
+
+  .publisher-info {
+    h6 {
+      margin-bottom: 0.25rem;
+    }
+  }
+}
 </style>

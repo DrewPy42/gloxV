@@ -1,29 +1,41 @@
-import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
-import homePage from '@/components/pages/homePage.vue';
-import seriesDashboard from '@/components/dashboards/series/seriesDashboard.vue';
-import statsForm from '@/components/forms/statsForm.vue';
+import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
     name: 'home',
-    component: homePage,
+    component: () => import('@/components/pages/HomePage.vue')
   },
   {
     path: '/series',
     name: 'series',
-    component: seriesDashboard,
+    component: () => import('@/components/pages/SeriesPage.vue')
+  },
+  {
+    path: '/storylines',
+    name: 'storylines',
+    component: () => import('@/components/pages/StorylinePage.vue')
+  },
+  {
+    path: '/locations',
+    name: 'locations',
+    component: () => import('@/components/pages/LocationPage.vue')
+  },
+  {
+    path: '/publishers',
+    name: 'publishers',
+    component: () => import('@/components/pages/PublisherPage.vue')
   },
   {
     path: '/stats',
     name: 'stats',
-    component: statsForm,
+    component: () => import('@/components/pages/StatsPage.vue')
   }
-];
+]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes,
-});
+  routes
+})
 
-export default router;
+export default router
