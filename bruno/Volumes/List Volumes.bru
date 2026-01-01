@@ -1,0 +1,16 @@
+meta {
+  name: List Volumes
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{ServerHost}}/api/volumes
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

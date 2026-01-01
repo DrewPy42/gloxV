@@ -15,6 +15,8 @@ interface VolumeRow extends RowDataPacket {
   notes: string | null;
   created_at: Date;
   updated_at: Date;
+  issue_count: number;
+  copy_count: number;
 }
 
 interface CountRow extends RowDataPacket {
@@ -36,9 +38,27 @@ router.get('/api/volumes', async (req: Request, res: Response) => {
         v.notes,
         v.created_at,
         v.updated_at,
-        s.title as series_title
+        s.title as series_title,
+        COALESCE(issue_stats.issue_count, 0) as issue_count,
+        COALESCE(copy_stats.copy_count, 0) as copy_count
       FROM volume v
       JOIN series s ON v.series_id = s.series_id
+      LEFT JOIN (
+        SELECT volume_id, COUNT(*) as issue_count
+        FROM issue 
+        WHERE deleted_at IS NULL
+        GROUP BY volume_id
+      ) issue_stats ON v.volume_id = issue_stats.volume_id
+      LEFT JOIN (
+        SELECT i.series_id, 
+               COUNT(c.copy_id) as copy_count,
+               SUM(c.purchase_price) as total_cost,
+               SUM(c.current_value) as total_value
+        FROM issue i
+        JOIN copy c ON i.issue_id = c.issue_id AND c.deleted_at IS NULL
+        WHERE i.deleted_at IS NULL
+        GROUP BY i.series_id
+      ) copy_stats ON s.series_id = copy_stats.series_id
       WHERE v.deleted_at IS NULL
     `;
 

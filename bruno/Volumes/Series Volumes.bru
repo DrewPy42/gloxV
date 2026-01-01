@@ -1,0 +1,20 @@
+meta {
+  name: Series Volumes
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{ServerHost}}/api/volumes?series_id=542
+  body: none
+  auth: inherit
+}
+
+params:query {
+  series_id: 542
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
