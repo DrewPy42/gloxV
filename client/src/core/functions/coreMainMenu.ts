@@ -1,15 +1,18 @@
-import { MenuOption } from '../models/menu.options';
+import { MenuOption } from '../models/';
 
 export type MainMenu = {
-  seriesMenuOptions: MenuOption[];
+  dashboardsMenuOptions: MenuOption[];
   reportsMenuOptions: MenuOption[];
   toolsMenuOptions: MenuOption[];
 };
 
 export default function(): MainMenu {
   return {
-    seriesMenuOptions: [
+    dashboardsMenuOptions: [
       { title: 'Series Dashboard', link: '/series', iconCode: 'fas', iconString: 'table-list' },
+      { title: 'Publisher Dashboard', link: '/publishers', iconCode: 'fas', iconString: 'building' },
+      { title: 'Locations Dashboard', link: '/locations', iconCode: 'fas', iconString: 'map-marker-alt' },
+      { title: 'Storylines Dashboard', link: '/storylines', iconCode: 'fas', iconString: 'book-open' },
     ],
     reportsMenuOptions: [
       { title: 'Reports', link: '/reports', iconCode: 'fas', iconString: 'file-alt' },

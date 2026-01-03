@@ -1,0 +1,16 @@
+meta {
+  name: List Publishers
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{ServerHost}}/api/publishers
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

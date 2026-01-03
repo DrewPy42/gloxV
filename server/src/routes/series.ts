@@ -76,7 +76,7 @@ router.get('/api/series', async (req: Request, res: Response) => {
       ) vol_stats ON s.series_id = vol_stats.series_id
       LEFT JOIN (
         SELECT series_id, COUNT(*) as issue_count
-        FROM issue 
+        FROM issue
         WHERE deleted_at IS NULL
         GROUP BY series_id
       ) issue_stats ON s.series_id = issue_stats.series_id

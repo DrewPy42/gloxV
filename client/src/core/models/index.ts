@@ -436,3 +436,11 @@ export interface HighValueCopy {
   issue_title?: string
   series_title: string
 }
+
+export interface MenuOption {
+  title: string
+  link: string
+  iconCode: string
+  iconString: string
+}
+

@@ -1,0 +1,16 @@
+meta {
+  name: Get Publisher
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{ServerHost}}/api/publishers/1
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

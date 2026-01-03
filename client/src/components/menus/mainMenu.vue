@@ -15,14 +15,14 @@
         </li>
         <li class="nav-item dropdown">
           <menu-dropdown
-            :menu-title="'Series'"
-            :menu-id="'menuSeries'"
-            :menu-options="menu.seriesMenuOptions"
-            :show="showMenu('menuSeries')"
+            :menu-title="'Dashboards'"
+            :menu-id="'menuDashboards'"
+            :menu-options="menu.dashboardsMenuOptions"
+            :show="showMenu('menuDashboards')"
             :menu-icon-code = "'fa'"
-            :menu-icon-name = "'fa-book'"
-            @mouseenter="menuHover('menuSeries')"
-            @mouseleave="menuHover('menuSeries')"
+            :menu-icon-name = "'fa-chart-line'"
+            @mouseenter="menuHover('menuDashboards')"
+            @mouseleave="menuHover('menuDashboards')"
           />
         </li>
         <li class="nav-item dropdown">
@@ -64,7 +64,7 @@ import { ref } from 'vue';
 const menu = MainMenu();
 
 const menuStatus = ref([
-  { id: 'menuSeries', show: false },
+  { id: 'menuDashboards', show: false },
   { id: 'menuReports', show: false },
   { id: 'menuTools', show: false }
 ]);

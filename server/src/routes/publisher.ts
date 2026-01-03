@@ -12,6 +12,9 @@ interface PublisherRow extends RowDataPacket {
   notes: string | null;
   created_at: Date;
   updated_at: Date;
+  issue_count: number;
+  copy_count: number;
+  total_value: number;
 }
 
 interface CountRow extends RowDataPacket {
@@ -23,15 +26,23 @@ router.get('/api/publishers', async (req: Request, res: Response) => {
   try {
     const baseQuery = `
       SELECT 
-        publisher_id,
-        publisher_name,
-        logo_path,
-        website,
-        notes,
-        created_at,
-        updated_at
-      FROM publisher
-      WHERE deleted_at IS NULL
+        p.publisher_id,
+        p.publisher_name,
+        p.logo_path,
+        p.website,
+        p.notes,
+        p.created_at,
+        p.updated_at,
+        COUNT(DISTINCT s.series_id) as series_count,
+        COUNT(DISTINCT i.issue_id) as issue_count,
+        COUNT(DISTINCT c.copy_id) as copy_count,
+        COALESCE(SUM(c.current_value), 0) as total_value
+      FROM publisher p
+      LEFT JOIN series s ON p.publisher_id = s.publisher_id AND s.deleted_at IS NULL
+      LEFT JOIN issue i ON s.series_id = i.series_id AND i.deleted_at IS NULL
+      LEFT JOIN copy c ON i.issue_id = c.issue_id AND c.deleted_at IS NULL
+      WHERE p.deleted_at IS NULL
+      GROUP BY p.publisher_id
     `;
 
     const id = req.query.id as string | undefined;
