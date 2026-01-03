@@ -196,7 +196,7 @@ router.get('/api/issues/:id/copies', async (req: Request, res: Response) => {
         cc.condition_text,
         cv.cover_type,
         cv.cover_description,
-        l.name as location_name,
+        l.location_name,
         l.storage_type
       FROM copy c
       LEFT JOIN condition_code cc ON c.condition_id = cc.condition_id
@@ -228,7 +228,7 @@ router.get('/api/issues/:id/storylines', async (req: Request, res: Response) => 
       FROM storyline_issue si
       JOIN storyline sl ON si.storyline_id = sl.storyline_id
       WHERE si.issue_id = ? AND sl.deleted_at IS NULL
-      ORDER BY sl.name`,
+      ORDER BY sl.storyline_name`,
       [id]
     );
 

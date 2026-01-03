@@ -48,7 +48,7 @@ const selectedLocation = ref<Location | null>(null)
 const columns: TableColumn[] = [
   { key: 'storage_type', label: 'Type', align: 'center' },
   { key: 'location_display', label: 'Location' },
-  { key: 'name', label: 'Name' },
+  { key: 'location_name', label: 'Name' },
   { key: 'series_count', label: 'Series', align: 'center' },
   { key: 'copy_count', label: 'Copies', align: 'center' },
   { key: 'total_value', label: 'Value', align: 'center', type: 'currency' }

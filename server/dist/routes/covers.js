@@ -1,0 +1,177 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const db_1 = require("../controllers/db");
+const router = (0, express_1.Router)();
+// GET /api/covers - List covers with filters
+router.get('/api/covers', async (req, res) => {
+    try {
+        const baseQuery = `
+      SELECT 
+        cv.*,
+        i.issue_number,
+        i.issue_title,
+        s.title as series_title,
+        s.series_id,
+        p.first_name as artist_first_name,
+        p.last_name as artist_last_name
+      FROM cover cv
+      JOIN issue i ON cv.issue_id = i.issue_id
+      JOIN series s ON i.series_id = s.series_id
+      LEFT JOIN person p ON cv.cover_artist_person_id = p.person_id
+      WHERE cv.deleted_at IS NULL
+    `;
+        const id = req.query.id;
+        const issueId = req.query.issue_id;
+        const coverType = req.query.cover_type;
+        let queryString = baseQuery;
+        const params = [];
+        if (id) {
+            queryString += ' AND cv.cover_id = ?';
+            params.push(parseInt(id));
+        }
+        else {
+            if (issueId) {
+                queryString += ' AND cv.issue_id = ?';
+                params.push(parseInt(issueId));
+            }
+            if (coverType) {
+                queryString += ' AND cv.cover_type = ?';
+                params.push(coverType);
+            }
+        }
+        queryString += ' ORDER BY s.title, i.sort_order, cv.is_primary DESC';
+        if (!id && !issueId) {
+            const limit = parseInt(req.query.limit) || 25;
+            const page = parseInt(req.query.page) || 1;
+            const offset = (page - 1) * limit;
+            queryString += ` LIMIT ${limit} OFFSET ${offset}`;
+        }
+        const results = await (0, db_1.query)(queryString, params);
+        const count = await (0, db_1.query)('SELECT COUNT(*) as total FROM cover WHERE deleted_at IS NULL');
+        res.json({ results, count });
+    }
+    catch (err) {
+        console.error('Error fetching covers:', err);
+        res.status(500).json({ error: 'Database error occurred' });
+    }
+});
+// GET /api/covers/:id - Get single cover
+router.get('/api/covers/:id', async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const results = await (0, db_1.query)(`SELECT 
+        cv.*,
+        i.issue_number,
+        i.issue_title,
+        i.cover_date,
+        s.title as series_title,
+        s.series_id,
+        p.first_name as artist_first_name,
+        p.last_name as artist_last_name
+       FROM cover cv
+       JOIN issue i ON cv.issue_id = i.issue_id
+       JOIN series s ON i.series_id = s.series_id
+       LEFT JOIN person p ON cv.cover_artist_person_id = p.person_id
+       WHERE cv.cover_id = ? AND cv.deleted_at IS NULL`, [id]);
+        if (results.length === 0) {
+            res.status(404).json({ error: 'Cover not found' });
+            return;
+        }
+        res.json(results[0]);
+    }
+    catch (err) {
+        console.error('Error fetching cover:', err);
+        res.status(500).json({ error: 'Database error occurred' });
+    }
+});
+// POST /api/covers - Create a new cover
+router.post('/api/covers', async (req, res) => {
+    try {
+        const { issue_id, cover_type, cover_description, cover_artist_person_id, cover_image_path, is_primary, notes } = req.body;
+        if (!issue_id) {
+            res.status(400).json({ error: 'issue_id is required' });
+            return;
+        }
+        // If setting as primary, unset other primaries for this issue
+        if (is_primary) {
+            await (0, db_1.execute)('UPDATE cover SET is_primary = 0 WHERE issue_id = ?', [issue_id]);
+        }
+        const result = await (0, db_1.execute)(`INSERT INTO cover (issue_id, cover_type, cover_description, 
+        cover_artist_person_id, cover_image_path, is_primary, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`, [
+            issue_id,
+            cover_type || 'standard',
+            cover_description || null,
+            cover_artist_person_id || null,
+            cover_image_path || null,
+            is_primary ? 1 : 0,
+            notes || null
+        ]);
+        res.status(201).json({
+            cover_id: result.insertId,
+            message: 'Cover created successfully'
+        });
+    }
+    catch (err) {
+        console.error('Error creating cover:', err);
+        res.status(500).json({ error: 'Database error occurred' });
+    }
+});
+// PUT /api/covers/:id - Update a cover
+router.put('/api/covers/:id', async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const { cover_type, cover_description, cover_artist_person_id, cover_image_path, is_primary, notes } = req.body;
+        // If setting as primary, unset other primaries for this issue
+        if (is_primary) {
+            const currentCover = await (0, db_1.query)('SELECT issue_id FROM cover WHERE cover_id = ?', [id]);
+            if (currentCover.length > 0) {
+                await (0, db_1.execute)('UPDATE cover SET is_primary = 0 WHERE issue_id = ? AND cover_id != ?', [currentCover[0].issue_id, id]);
+            }
+        }
+        const result = await (0, db_1.execute)(`UPDATE cover SET 
+        cover_type = COALESCE(?, cover_type),
+        cover_description = ?,
+        cover_artist_person_id = ?,
+        cover_image_path = ?,
+        is_primary = COALESCE(?, is_primary),
+        notes = ?
+       WHERE cover_id = ? AND deleted_at IS NULL`, [
+            cover_type,
+            cover_description ?? null,
+            cover_artist_person_id ?? null,
+            cover_image_path ?? null,
+            is_primary !== undefined ? (is_primary ? 1 : 0) : null,
+            notes ?? null,
+            id
+        ]);
+        if (result.affectedRows === 0) {
+            res.status(404).json({ error: 'Cover not found' });
+            return;
+        }
+        res.json({ message: 'Cover updated successfully' });
+    }
+    catch (err) {
+        console.error('Error updating cover:', err);
+        res.status(500).json({ error: 'Database error occurred' });
+    }
+});
+// DELETE /api/covers/:id - Soft delete a cover
+router.delete('/api/covers/:id', async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const result = await (0, db_1.execute)('UPDATE cover SET deleted_at = NOW() WHERE cover_id = ? AND deleted_at IS NULL', [id]);
+        if (result.affectedRows === 0) {
+            res.status(404).json({ error: 'Cover not found' });
+            return;
+        }
+        res.json({ message: 'Cover deleted successfully' });
+    }
+    catch (err) {
+        console.error('Error deleting cover:', err);
+        res.status(500).json({ error: 'Database error occurred' });
+    }
+});
+exports.default = router;
+//# sourceMappingURL=covers.js.map

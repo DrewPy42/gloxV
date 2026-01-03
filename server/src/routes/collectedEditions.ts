@@ -13,7 +13,7 @@ router.get('/api/collected-editions', async (req: Request, res: Response) => {
         p.publisher_name,
         cc.condition_code,
         cc.condition_text,
-        l.name as location_name,
+        l.location_name,
         l.storage_type,
         COUNT(cei.issue_id) as issue_count
       FROM collected_edition ce
@@ -78,7 +78,7 @@ router.get('/api/collected-editions/:id', async (req: Request, res: Response) =>
         p.publisher_name,
         cc.condition_code,
         cc.condition_text,
-        l.name as location_name,
+        l.location_name,
         l.storage_type,
         l.cabinet_number,
         l.drawer_number,

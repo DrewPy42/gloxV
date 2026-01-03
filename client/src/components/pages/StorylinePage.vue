@@ -20,9 +20,9 @@
       @row-click="handleRowClick"
       @view="openViewModal"
     >
-      <template #cell-name="{ record }">
+      <template #cell-storyline_name="{ record }">
         <a href="#" @click.prevent="openViewModal(record)">
-          {{ record.name }}
+          {{ record.storyline_name }}
         </a>
       </template>
 
@@ -36,7 +36,7 @@
     <!-- View Modal -->
     <Modal
       v-model="isModalOpen"
-      :title="selectedStoryline?.name || 'Storyline'"
+      :title="selectedStoryline?.storyline_name || 'Storyline'"
       size="xl"
       :show-confirm-button="false"
     >
@@ -72,17 +72,16 @@ import { ref, onMounted } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { DataTable, Modal, type TableColumn } from '@/components/common'
 import { useStorylineStoreExtended, type Storyline } from '@/core'
-import { useFormatting } from '@/composables'
 
 const storylineStore = useStorylineStoreExtended()
-const { formatDate } = useFormatting()
+
 
 const isModalOpen = ref(false)
 const selectedStoryline = ref<Storyline | null>(null)
 const storylineDetails = ref<any>(null)
 
 const columns: TableColumn[] = [
-  { key: 'name', label: 'Name', sortable: true, type: 'link' },
+  { key: 'storyline_name', label: 'Name', sortable: true, type: 'link' },
   { key: 'storyline_type', label: 'Type', align: 'center' },
   { key: 'start_date', label: 'Start', align: 'center', type: 'date' },
   { key: 'end_date', label: 'End', align: 'center', type: 'date' },

@@ -55,7 +55,7 @@ router.get('/api/series', async (req: Request, res: Response) => {
         s.limited_series_count,
         s.notes,
         s.default_location_id,
-        l.name as location_name,
+        l.location_name,
         l.divider,
         s.created_at,
         s.updated_at,

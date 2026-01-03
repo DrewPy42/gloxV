@@ -6,7 +6,7 @@ const router = Router();
 
 interface StorylineRow extends RowDataPacket {
   storyline_id: number;
-  name: string;
+  storyline_name: string;
   storyline_type: string;
   start_date: Date | null;
   end_date: Date | null;
@@ -22,7 +22,7 @@ interface CountRow extends RowDataPacket {
 router.get('/api/storylines', async (req: Request, res: Response) => {
   try {
     const baseQuery = `
-      SELECT 
+      SELECT
         sl.*,
         COUNT(si.issue_id) as issue_count
       FROM storyline sl
@@ -35,7 +35,9 @@ router.get('/api/storylines', async (req: Request, res: Response) => {
     const search = req.query.search as string | undefined;
 
     let queryString = baseQuery;
+    let countWhere = 'WHERE deleted_at IS NULL';
     const params: (string | number)[] = [];
+    const countParams: (string | number)[] = [];
 
     if (id) {
       queryString += ' AND sl.storyline_id = ?';
@@ -43,15 +45,20 @@ router.get('/api/storylines', async (req: Request, res: Response) => {
     } else {
       if (type) {
         queryString += ' AND sl.storyline_type = ?';
+        countWhere += ' AND storyline_type = ?';
         params.push(type);
+        countParams.push(type);
       }
       if (search) {
-        queryString += ' AND sl.name LIKE ?';
-        params.push(`%${search}%`);
+        queryString += ' AND sl.storyline_name LIKE ?';
+        countWhere += ' AND storyline_name LIKE ?';
+        const searchPattern = `%${search}%`;
+        params.push(searchPattern);
+        countParams.push(searchPattern);
       }
     }
 
-    queryString += ' GROUP BY sl.storyline_id ORDER BY sl.start_date DESC, sl.name';
+    queryString += ' GROUP BY sl.storyline_id ORDER BY sl.storyline_name';
 
     if (!id) {
       const limit = parseInt(req.query.limit as string) || 25;
@@ -62,7 +69,8 @@ router.get('/api/storylines', async (req: Request, res: Response) => {
 
     const results = await query<StorylineRow[]>(queryString, params);
     const count = await query<CountRow[]>(
-      'SELECT COUNT(*) as total FROM storyline WHERE deleted_at IS NULL'
+      `SELECT COUNT(*) as total FROM storyline ${countWhere}`,
+      countParams
     );
 
     res.json({ results, count });
@@ -136,7 +144,7 @@ router.get('/api/storylines/:id', async (req: Request, res: Response) => {
 router.post('/api/storylines', async (req: Request, res: Response) => {
   try {
     const {
-      name,
+      storyline_name,
       storyline_type,
       start_date,
       end_date,
@@ -144,17 +152,17 @@ router.post('/api/storylines', async (req: Request, res: Response) => {
       banner_image_path
     } = req.body;
 
-    if (!name) {
-      res.status(400).json({ error: 'name is required' });
+    if (!storyline_name) {
+      res.status(400).json({ error: 'storyline_name is required' });
       return;
     }
 
     const result = await execute(
-      `INSERT INTO storyline (name, storyline_type, start_date, end_date, 
+      `INSERT INTO storyline (storyline_name, storyline_type, start_date, end_date,
         description, banner_image_path)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [
-        name,
+        storyline_name,
         storyline_type || 'arc',
         start_date || null,
         end_date || null,
@@ -178,7 +186,7 @@ router.put('/api/storylines/:id', async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
     const {
-      name,
+      storyline_name,
       storyline_type,
       start_date,
       end_date,
@@ -187,8 +195,8 @@ router.put('/api/storylines/:id', async (req: Request, res: Response) => {
     } = req.body;
 
     const result = await execute(
-      `UPDATE storyline SET 
-        name = COALESCE(?, name),
+      `UPDATE storyline SET
+        storyline_name = COALESCE(?, storyline_name),
         storyline_type = COALESCE(?, storyline_type),
         start_date = ?,
         end_date = ?,
@@ -196,7 +204,7 @@ router.put('/api/storylines/:id', async (req: Request, res: Response) => {
         banner_image_path = ?
        WHERE storyline_id = ? AND deleted_at IS NULL`,
       [
-        name,
+        storyline_name,
         storyline_type,
         start_date ?? null,
         end_date ?? null,

@@ -83,7 +83,7 @@ router.get('/api/tags/:id', async (req: Request, res: Response) => {
           WHEN tg.entity_type = 'series' THEN (SELECT title FROM series WHERE series_id = tg.entity_id)
           WHEN tg.entity_type = 'issue' THEN (SELECT CONCAT(s.title, ' #', i.issue_number) FROM issue i JOIN series s ON i.series_id = s.series_id WHERE i.issue_id = tg.entity_id)
           WHEN tg.entity_type = 'person' THEN (SELECT CONCAT(COALESCE(first_name, ''), ' ', last_name) FROM person WHERE person_id = tg.entity_id)
-          WHEN tg.entity_type = 'storyline' THEN (SELECT name FROM storyline WHERE storyline_id = tg.entity_id)
+          WHEN tg.entity_type = 'storyline' THEN (SELECT storyline_name FROM storyline WHERE storyline_id = tg.entity_id)
           WHEN tg.entity_type = 'collected_edition' THEN (SELECT title FROM collected_edition WHERE collected_edition_id = tg.entity_id)
           ELSE 'Unknown'
         END as entity_name

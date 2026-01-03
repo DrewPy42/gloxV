@@ -76,11 +76,11 @@ export type StorageType = 'cabinet' | 'display' | 'bookshelf' | 'digital';
 export interface Location extends AuditFields {
   location_id: number;
   storage_type: StorageType;
-  name: string | null;
+  location_name: string | null;
   cabinet_number: number | null;
   drawer_number: number | null;
   divider: string | null;
-  row_number: number | null;
+  row_num: number | null;
   shelf_description: string | null;
   file_path: string | null;
   backup_path: string | null;
@@ -240,7 +240,7 @@ export type StorylineType = 'crossover' | 'event' | 'arc' | 'other';
 
 export interface Storyline extends AuditFields {
   storyline_id: number;
-  name: string;
+  storyline_name: string;
   storyline_type: StorylineType;
   start_date: Date | null;
   end_date: Date | null;

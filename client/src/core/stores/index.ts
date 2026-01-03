@@ -225,7 +225,7 @@ export const useStorylineStore = createBaseStore<Storyline>('storylines', {
 })
 
 // Extended storyline store
-export const useStorylineStoreExtended = () => {
+export function useStorylineStoreExtended() {
   const baseStore = useStorylineStore()
 
   const fetchStorylineWithIssues = async (id: number) => {
@@ -269,12 +269,11 @@ export const useStorylineStoreExtended = () => {
     }
   }
 
-  return {
-    ...baseStore,
+  return Object.assign(baseStore, {
     fetchStorylineWithIssues,
     addIssueToStoryline,
     removeIssueFromStoryline
-  }
+  })
 }
 
 // ============================================================================

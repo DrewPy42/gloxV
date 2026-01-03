@@ -110,12 +110,12 @@ DROP TABLE IF EXISTS `location`;
 CREATE TABLE `location` (
   `location_id` INT NOT NULL AUTO_INCREMENT,
   `storage_type` ENUM('cabinet', 'display', 'bookshelf', 'digital') NOT NULL,
-  `name` VARCHAR(100) DEFAULT NULL,
+  `location_name` VARCHAR(100) DEFAULT NULL,
   -- Cabinet-specific fields
   `cabinet_number` INT DEFAULT NULL,
   `drawer_number` INT DEFAULT NULL,
   `divider` VARCHAR(50) DEFAULT NULL,
-  `row_number` INT DEFAULT NULL,
+  `row_num` INT DEFAULT NULL,
   -- Bookshelf/display fields
   `shelf_description` VARCHAR(255) DEFAULT NULL,
   -- Digital-specific fields
@@ -392,7 +392,7 @@ CREATE TABLE `issue_credit` (
 DROP TABLE IF EXISTS `storyline`;
 CREATE TABLE `storyline` (
   `storyline_id` INT NOT NULL AUTO_INCREMENT,
-  `name` VARCHAR(150) NOT NULL,
+  `storyline_name` VARCHAR(150) NOT NULL,
   `storyline_type` ENUM('crossover', 'event', 'arc', 'other') NOT NULL DEFAULT 'arc',
   `start_date` DATE DEFAULT NULL,
   `end_date` DATE DEFAULT NULL,
@@ -402,7 +402,7 @@ CREATE TABLE `storyline` (
   `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `deleted_at` DATETIME DEFAULT NULL,
   PRIMARY KEY (`storyline_id`),
-  INDEX `idx_storyline_name` (`name`),
+  INDEX `idx_storyline_name` (`storyline_name`),
   INDEX `idx_storyline_type` (`storyline_type`),
   INDEX `idx_storyline_deleted` (`deleted_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

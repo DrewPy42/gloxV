@@ -155,7 +155,7 @@ router.get('/api/stats/by-location', async (req: Request, res: Response) => {
       `SELECT 
         l.location_id,
         l.storage_type,
-        l.name,
+        l.location_name,
         l.divider,
         l.cabinet_number,
         l.drawer_number,
