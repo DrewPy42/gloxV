@@ -25,7 +25,7 @@
             @mouseleave="menuHover('menuDashboards')"
           />
         </li>
-        <li class="nav-item dropdown">
+        <!-- <li class="nav-item dropdown">
           <menu-dropdown
             :menu-title="'Reports'"
             :menu-id="'menuReports'"
@@ -36,7 +36,7 @@
             @mouseenter="menuHover('menuReports')"
             @mouseleave="menuHover('menuReports')"
           />
-        </li>
+        </li> -->
         <li class="nav-item dropdown">
           <menu-dropdown
             :menu-title="'Tools'"

@@ -10,6 +10,7 @@
       :total-pages="seriesStore.totalPages"
       :current-page="seriesStore.currentPage"
       :per-page="seriesStore.perPage"
+      :search-query="searchQuery"
       id-field="series_id"
       entity-name="series"
       :show-add-button="true"
@@ -127,6 +128,7 @@ const isEditing = ref(false)
 const selectedSeries = ref<Series | null>(null)
 const formData = ref<Partial<Series>>({})
 const publishers = ref<any[]>([])
+const searchQuery = ref('')
 
 // ============================================================================
 // Table Configuration
@@ -168,6 +170,7 @@ const modalTitle = computed(() => {
 // ============================================================================
 
 const handleSearch = (query: string) => {
+  searchQuery.value = query
   seriesStore.setSearch(query)
 }
 

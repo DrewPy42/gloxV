@@ -575,6 +575,13 @@ const toggleSelectAll = () => {
 
   .btn {
     padding: 0.25rem 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    svg {
+      margin: 0 auto;
+    }
   }
 }
 
