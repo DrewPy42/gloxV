@@ -116,7 +116,7 @@ import { useImage, useFormatting } from '@/composables'
 const seriesStore = useSeriesStore()
 const publisherStore = usePublisherStoreExtended()
 const { getLogoImageUrl } = useImage()
-const { formatCurrency, formatPercentage } = useFormatting()
+const { formatPercentage } = useFormatting()
 
 // ============================================================================
 // State

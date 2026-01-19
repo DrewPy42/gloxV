@@ -300,7 +300,21 @@ export function useImage() {
   }
 
   const getCoverImageUrl = (path: string | null | undefined): string => {
-    return getImageUrl(path, '/images/covers/missing_cover.svg')
+    if (!path) return '/images/covers/missing_cover.svg'
+
+    // If path already starts with http:// or https:// or /, return as-is
+    if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('/')) {
+      return path
+    }
+
+    // System files (svg, png for placeholders) go directly in covers/
+    // User uploads (jpg, jpeg) go in covers/uploads/
+    if (path.endsWith('.svg') || path.endsWith('.png')) {
+      return `/images/covers/${path}`
+    }
+
+    // User uploaded covers go in uploads subdirectory
+    return `/images/covers/uploads/${path}`
   }
 
   const getLogoImageUrl = (path: string | null | undefined): string => {

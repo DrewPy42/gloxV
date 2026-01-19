@@ -168,7 +168,7 @@ export const usePublisherStoreExtended = () => {
       const data = await fetchWrapper.get<{ results: Publisher[] }>(
         `${API_BASE}/publishers?getall=true`
       )
-      baseStore.records.value = data.results || []
+      baseStore.records = data.results || []
       return data.results
     } catch (err) {
       console.error('Error fetching all publishers:', err)

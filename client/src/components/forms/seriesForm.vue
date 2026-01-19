@@ -120,13 +120,31 @@
             @edit="editIssue"
             @delete="deleteIssue"
           >
-            <template #cell-cover_image_path="{ record }">
-              <img
-                v-if="record.cover_image_path"
-                :src="getCoverImageUrl(record.cover_image_path)"
-                alt="Cover"
-                class="issue-cover-thumb"
-              />
+            <template #cell-cover_images="{ record }">
+              <div class="cover-stack">
+                <template v-if="record.cover_images">
+                  <img
+                    v-for="(coverPath, index) in getCoverPaths(record.cover_images)"
+                    :key="index"
+                    :src="getCoverImageUrl(coverPath)"
+                    :alt="`Cover ${index + 1}`"
+                    class="issue-cover-thumb"
+                    :style="{ zIndex: 10 - index }"
+                  />
+                  <span
+                    v-if="record.cover_count > getCoverPaths(record.cover_images).length"
+                    class="cover-more-badge"
+                  >
+                    +{{ record.cover_count - getCoverPaths(record.cover_images).length }}
+                  </span>
+                </template>
+                <img
+                  v-else
+                  :src="getCoverImageUrl(null)"
+                  alt="No cover"
+                  class="issue-cover-thumb"
+                />
+              </div>
             </template>
           </DataTable>
         </Card>
@@ -281,10 +299,11 @@ const valueChangePercent = computed(() => {
 })
 
 const issueColumns: TableColumn[] = [
-  { key: 'cover_image_path', label: '', width: '50px' },
+  { key: 'cover_images', label: '', width: '80px' },
   { key: 'issue_number', label: '#', width: '60px' },
   { key: 'issue_title', label: 'Title' },
-  { key: 'cover_date', label: 'Date', type: 'date' }
+  { key: 'cover_date', label: 'Date', type: 'date' },
+  { key: 'copy_count', label: 'Copies', align: 'center' },
 ]
 
 // ============================================================================
@@ -356,6 +375,12 @@ const deleteIssue = (issue: Issue) => {
   console.log('Delete issue', issue)
 }
 
+const getCoverPaths = (coverImagesString: string): string[] => {
+  if (!coverImagesString) return []
+  // Split comma-separated string and limit to first 4
+  return coverImagesString.split(',').slice(0, 4)
+}
+
 // ============================================================================
 // Watchers
 // ============================================================================
@@ -424,10 +449,42 @@ onMounted(() => {
     }
   }
 
+  .cover-stack {
+    display: flex;
+    align-items: center;
+    position: relative;
+    height: 40px;
+    min-width: 60px;
+  }
+
   .issue-cover-thumb {
     height: 40px;
     width: auto;
     object-fit: contain;
+    border: 1px solid #dee2e6;
+    border-radius: 2px;
+    background: white;
+    position: relative;
+
+    &:not(:first-child) {
+      margin-left: -15px;
+    }
+  }
+
+  .cover-more-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 6px;
+    margin-left: 4px;
+    background-color: #6c757d;
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border-radius: 12px;
+    white-space: nowrap;
   }
 
   .publisher-logo {

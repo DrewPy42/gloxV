@@ -196,6 +196,12 @@ export interface Issue extends AuditFields {
   series_title?: string
   volume_number?: number
   publisher_name?: string
+  // Computed
+  copy_count?: number
+  total_cost?: number
+  total_value?: number
+  cover_count?: number
+  cover_images?: string
 }
 
 // ============================================================================

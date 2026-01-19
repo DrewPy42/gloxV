@@ -1,6 +1,5 @@
 services:
   client:
-    image: node:18-alpine
     build:
       context: ./client
       dockerfile: Dockerfile
@@ -30,7 +29,8 @@ services:
       - /app/node_modules  # Do not share node_modules between host and container
       # - ../env:/app/.env
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
     networks:
       - app-network
   mysql:
