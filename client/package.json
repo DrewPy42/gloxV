@@ -17,6 +17,7 @@
     "@popperjs/core": "^2.11.8",
     "axios": "^1.7.9",
     "bootstrap": "^5.3.3",
+    "date-fns": "^4.1.0",
     "dompurify": "^3.2.3",
     "epic-spinners": "^2.0.0",
     "pinia": "^2.3.1",

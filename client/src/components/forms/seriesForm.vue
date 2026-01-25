@@ -240,6 +240,8 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { Card, FormField, StatCard, DataTable, type TableColumn } from '@/components/common'
 import { useVolumeStore, useIssueStore, useStatsStore, type Series, type Volume, type Issue } from '@/core'
 import { useImage } from '@/composables'
+import { format } from 'date-fns'
+
 
 // ============================================================================
 // Props & Emits
@@ -302,7 +304,7 @@ const issueColumns: TableColumn[] = [
   { key: 'cover_images', label: '', width: '80px' },
   { key: 'issue_number', label: '#', width: '60px' },
   { key: 'issue_title', label: 'Title' },
-  { key: 'cover_date', label: 'Date', type: 'date' },
+  { key: 'cover_date', label: 'Date', type: 'text', formatter: (value) => value ? format(new Date(value), 'MMM yyyy') : ''},
   { key: 'copy_count', label: 'Copies', align: 'center' },
 ]
 
