@@ -186,8 +186,9 @@ CREATE TABLE `volume` (
   `volume_id` INT NOT NULL AUTO_INCREMENT,
   `series_id` INT NOT NULL,
   `volume_number` INT NOT NULL,
-  `start_issue` INT DEFAULT NULL,
-  `end_issue` INT DEFAULT NULL,
+  `issue_range` VARCHAR(255) DEFAULT NULL,  -- e.g., "1-416, 500+" for non-contiguous numbering
+  `start_issue` INT DEFAULT NULL,  -- Computed from issue_range for quick lookups
+  `end_issue` INT DEFAULT NULL,    -- Computed from issue_range, NULL if open-ended
   `start_date` DATE DEFAULT NULL,
   `end_date` DATE DEFAULT NULL,
   `notes` TEXT,
@@ -197,7 +198,7 @@ CREATE TABLE `volume` (
   PRIMARY KEY (`volume_id`),
   INDEX `idx_volume_series` (`series_id`, `volume_number`),
   INDEX `idx_volume_deleted` (`deleted_at`),
-  CONSTRAINT `fk_volume_series` FOREIGN KEY (`series_id`) 
+  CONSTRAINT `fk_volume_series` FOREIGN KEY (`series_id`)
     REFERENCES `series` (`series_id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -506,21 +507,24 @@ WHERE s.deleted_at IS NULL
 GROUP BY s.series_id, s.title;
 
 -- View: Missing issues in a volume
+-- Note: Actual missing issue calculation is done in application code using issue_range
 CREATE OR REPLACE VIEW `v_missing_issues` AS
-SELECT 
+SELECT
   v.volume_id,
   v.series_id,
   s.title AS series_title,
   v.volume_number,
+  v.issue_range,
   v.start_issue,
   v.end_issue,
-  GROUP_CONCAT(DISTINCT i.issue_number ORDER BY CAST(i.issue_number AS UNSIGNED)) AS owned_issues
+  GROUP_CONCAT(DISTINCT i.issue_number ORDER BY i.sort_order) AS owned_issues,
+  GROUP_CONCAT(DISTINCT i.issue_number_numeric ORDER BY i.issue_number_numeric) AS owned_issue_numbers
 FROM volume v
 JOIN series s ON v.series_id = s.series_id
 LEFT JOIN issue i ON v.volume_id = i.volume_id AND i.deleted_at IS NULL
 LEFT JOIN copy c ON i.issue_id = c.issue_id AND c.deleted_at IS NULL
 WHERE v.deleted_at IS NULL
-GROUP BY v.volume_id, v.series_id, s.title, v.volume_number, v.start_issue, v.end_issue;
+GROUP BY v.volume_id, v.series_id, s.title, v.volume_number, v.issue_range, v.start_issue, v.end_issue;
 
 -- View: Do I have this issue in any format?
 CREATE OR REPLACE VIEW `v_issue_ownership` AS

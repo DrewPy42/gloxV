@@ -68,8 +68,7 @@
         <!-- Volumes Section -->
         <Card title="Volumes" v-if="series.series_id">
           <template #header-actions>
-            <button 
-              v-if="isEditing" 
+            <button
               class="btn btn-sm btn-primary"
               @click="addVolume"
             >
@@ -97,15 +96,14 @@
         <!-- Issues Section -->
         <Card title="Issues" v-if="selectedVolumeId">
           <template #header-actions>
-            <button 
-              v-if="isEditing" 
+            <button
               class="btn btn-sm btn-primary"
               @click="addIssue"
             >
               <font-awesome-icon :icon="['fas', 'plus']" /> Add Issue
             </button>
           </template>
-          
+
           <DataTable
             :records="issues"
             :columns="issueColumns"
@@ -113,7 +111,7 @@
             :paginated="false"
             :show-header="false"
             :show-footer="false"
-            :show-actions="isEditing"
+            :show-actions="true"
             :actions="['edit', 'delete']"
             id-field="issue_id"
             entity-name="issues"
@@ -231,16 +229,49 @@
         </Card>
       </div>
     </div>
+
+    <!-- Volume Modal -->
+    <VolumeModal
+      v-if="series.series_id"
+      v-model="showVolumeModal"
+      :series-id="series.series_id"
+      :volume="editingVolume"
+      @saved="handleVolumeSaved"
+    />
+
+    <!-- Issue Modal -->
+    <IssueModal
+      v-if="series.series_id && selectedVolumeId"
+      v-model="showIssueModal"
+      :series-id="series.series_id"
+      :volume-id="selectedVolumeId"
+      :issue="editingIssue"
+      @saved="handleIssueSaved"
+    />
+
+    <!-- Confirmation Modal -->
+    <Modal
+      v-model="confirmation.isConfirmOpen.value"
+      :title="confirmation.confirmTitle.value"
+      confirm-text="Delete"
+      confirm-variant="danger"
+      @confirm="confirmation.handleConfirm"
+      @close="confirmation.handleCancel"
+    >
+      <p>{{ confirmation.confirmMessage.value }}</p>
+    </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { Card, FormField, StatCard, DataTable, type TableColumn } from '@/components/common'
+import { Card, FormField, StatCard, DataTable, Modal, type TableColumn } from '@/components/common'
 import { useVolumeStore, useIssueStore, useStatsStore, type Series, type Volume, type Issue } from '@/core'
-import { useImage } from '@/composables'
+import { useImage, useConfirmation } from '@/composables'
 import { format } from 'date-fns'
+import VolumeModal from '@/components/modals/VolumeModal.vue'
+import IssueModal from '@/components/modals/IssueModal.vue'
 
 
 // ============================================================================
@@ -270,6 +301,7 @@ const volumeStore = useVolumeStore()
 const issueStore = useIssueStore()
 const statsStore = useStatsStore()
 const { getCoverImageUrl, getLogoImageUrl } = useImage()
+const confirmation = useConfirmation()
 
 // ============================================================================
 // State
@@ -283,6 +315,12 @@ const stats = ref<any>({})
 const selectedVolumeId = ref<number | null>(null)
 const loadingIssues = ref(false)
 const loadingStats = ref(false)
+
+// Modal state
+const showVolumeModal = ref(false)
+const editingVolume = ref<Volume | null>(null)
+const showIssueModal = ref(false)
+const editingIssue = ref<Issue | null>(null)
 
 // ============================================================================
 // Computed
@@ -358,23 +396,52 @@ const selectVolume = (volume: Volume) => {
 }
 
 const addVolume = () => {
-  // TODO: Open volume add modal
-  console.log('Add volume')
+  editingVolume.value = null
+  showVolumeModal.value = true
+}
+
+const handleVolumeSaved = async (volume: Volume) => {
+  await loadVolumes()
+  await loadStats()
+  // Select the new/updated volume
+  if (volume.volume_id) {
+    const savedVolume = volumes.value.find(v => v.volume_id === volume.volume_id)
+    if (savedVolume) {
+      selectVolume(savedVolume)
+    }
+  }
 }
 
 const addIssue = () => {
-  // TODO: Open issue add modal
-  console.log('Add issue')
+  editingIssue.value = null
+  showIssueModal.value = true
 }
 
 const editIssue = (issue: Issue) => {
-  // TODO: Open issue edit modal
-  console.log('Edit issue', issue)
+  editingIssue.value = issue
+  showIssueModal.value = true
 }
 
-const deleteIssue = (issue: Issue) => {
-  // TODO: Confirm and delete issue
-  console.log('Delete issue', issue)
+const handleIssueSaved = async () => {
+  if (selectedVolumeId.value) {
+    await loadIssues(selectedVolumeId.value)
+    await loadStats()
+  }
+}
+
+const deleteIssue = async (issue: Issue) => {
+  const confirmed = await confirmation.confirm(
+    `Are you sure you want to delete issue #${issue.issue_number}${issue.issue_title ? ` - ${issue.issue_title}` : ''}?`,
+    'Delete Issue'
+  )
+
+  if (confirmed) {
+    const success = await issueStore.deleteRecord(issue.issue_id)
+    if (success && selectedVolumeId.value) {
+      await loadIssues(selectedVolumeId.value)
+      await loadStats()
+    }
+  }
 }
 
 const getCoverPaths = (coverImagesString: string): string[] => {

@@ -160,6 +160,7 @@ export interface Volume extends AuditFields {
   volume_id: number
   series_id: number
   volume_number: number
+  issue_range?: string
   start_issue?: number
   end_issue?: number
   start_date?: string

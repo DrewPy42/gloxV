@@ -118,6 +118,7 @@ export interface Volume extends AuditFields {
   volume_id: number;
   series_id: number;
   volume_number: number;
+  issue_range: string | null;
   start_issue: number | null;
   end_issue: number | null;
   start_date: Date | null;
