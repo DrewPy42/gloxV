@@ -30,13 +30,13 @@ interface CountRow extends RowDataPacket {
 router.get('/api/copies', async (req: Request, res: Response) => {
   try {
     const baseQuery = `
-      SELECT 
+      SELECT
         c.*,
         cc.condition_code,
         cc.condition_text,
-        cv.cover_type,
-        cv.cover_description,
-        cv.cover_image_path,
+        COALESCE(cv.cover_type) as cover_type,
+        COALESCE(cv.cover_description) as cover_description,
+        COALESCE(cv.cover_image_path) as cover_image_path,
         l.location_name,
         l.storage_type,
         l.divider,
@@ -51,7 +51,7 @@ router.get('/api/copies', async (req: Request, res: Response) => {
       JOIN series s ON i.series_id = s.series_id
       LEFT JOIN volume v ON i.volume_id = v.volume_id
       LEFT JOIN condition_code cc ON c.condition_id = cc.condition_id
-      LEFT JOIN cover cv ON c.cover_id = cv.cover_id
+      LEFT JOIN cover cv ON c.copy_id = cv.copy_id AND cv.deleted_at IS NULL
       LEFT JOIN location l ON c.location_id = l.location_id
       WHERE c.deleted_at IS NULL
     `;
@@ -133,13 +133,13 @@ router.get('/api/copies/:id', async (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
 
     const copyQuery = `
-      SELECT 
+      SELECT
         c.*,
         cc.condition_code,
         cc.condition_text,
-        cv.cover_type,
-        cv.cover_description,
-        cv.cover_image_path,
+        COALESCE(cv.cover_type, pcv.cover_type) as cover_type,
+        COALESCE(cv.cover_description, pcv.cover_description) as cover_description,
+        COALESCE(cv.cover_image_path, pcv.cover_image_path) as cover_image_path,
         l.location_name,
         l.storage_type,
         l.cabinet_number,
@@ -159,6 +159,7 @@ router.get('/api/copies/:id', async (req: Request, res: Response) => {
       LEFT JOIN volume v ON i.volume_id = v.volume_id
       LEFT JOIN condition_code cc ON c.condition_id = cc.condition_id
       LEFT JOIN cover cv ON c.cover_id = cv.cover_id
+      LEFT JOIN cover pcv ON c.copy_id = pcv.copy_id AND pcv.is_primary = 1 AND pcv.deleted_at IS NULL
       LEFT JOIN location l ON c.location_id = l.location_id
       WHERE c.copy_id = ? AND c.deleted_at IS NULL
     `;

@@ -82,14 +82,54 @@
         label="Notes"
         :rows="3"
       />
+      <Card title="Copies" v-if="isExistingIssue">
+        <template #header-actions>
+          <button
+            class="btn btn-sm btn-primary"
+          >
+            <font-awesome-icon :icon="['fas', 'plus']" /> Add Copy
+          </button>
+        </template>
+
+        <div v-if="copies.length === 0 && !loadingCopies" class="text-muted text-center py-3">
+          No copies found
+        </div>
+        <DataTable
+          v-else
+          :records="copies"
+          :columns="copyColumns"
+          :loading="loadingCopies"
+          :paginated="false"
+          :show-header="true"
+          :show-footer="false"
+          :show-actions="true"
+          :actions="['edit', 'delete']"
+          id-field="copy_id"
+          entity-name="copies"
+        >
+          <template #cell-cover_image_path="{ record }">
+            <img
+              :src="getCoverImageUrl(record.cover_image_path)"
+              :alt="record.cover_description || 'Cover'"
+              class="copy-cover-thumb"
+            />
+          </template>
+          <template #cell-format="{ record }">
+            <span class="badge" :class="formatBadgeClass(record.format)">
+              {{ formatLabel(record.format) }}
+            </span>
+          </template>
+        </DataTable>
+      </Card>
     </div>
   </Modal>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { Modal, FormField } from '@/components/common'
-import { useIssueStore, type Issue } from '@/core'
+import { Card, Modal, FormField, DataTable, type TableColumn } from '@/components/common'
+import { useIssueStore, useCopyStore, type Issue, type Copy } from '@/core'
+import { useImage } from '@/composables'
 
 // ============================================================================
 // Props & Emits
@@ -116,6 +156,8 @@ const emit = defineEmits<{
 // ============================================================================
 
 const issueStore = useIssueStore()
+const copyStore = useCopyStore()
+const { getCoverImageUrl } = useImage()
 
 // ============================================================================
 // State
@@ -123,6 +165,8 @@ const issueStore = useIssueStore()
 
 const loading = ref(false)
 const errors = ref<Record<string, string>>({})
+const copies = ref<Copy[]>([])
+const loadingCopies = ref(false)
 
 const defaultFormData = (): Partial<Issue> => ({
   issue_number: '',
@@ -146,11 +190,23 @@ const isOpen = computed({
   set: (value) => emit('update:modelValue', value)
 })
 
-const isEditing = computed(() => !!props.issue?.issue_id)
+// True when viewing/editing an existing issue (has an issue_id)
+const isExistingIssue = computed(() => !!props.issue?.issue_id)
+
+// For the modal title and button text
+const isEditing = computed(() => isExistingIssue.value)
 
 const isValid = computed(() => {
   return formData.value.issue_number && formData.value.issue_number.trim() !== ''
 })
+
+const copyColumns: TableColumn[] = [
+  { key: 'cover_image_path', label: '', width: '60px' },
+  { key: 'format', label: 'Format', width: '100px' },
+  { key: 'condition_code', label: 'Cond.', width: '70px' },
+  { key: 'purchase_price', label: 'Cost', type: 'currency', width: '80px' },
+  { key: 'current_value', label: 'Value', type: 'currency', width: '80px' },
+]
 
 // ============================================================================
 // Methods
@@ -193,6 +249,24 @@ const validate = (): boolean => {
   return true
 }
 
+const loadCopies = async (issueId: number) => {
+  if (!issueId) return
+  loadingCopies.value = true
+  try {
+    await copyStore.fetchRecords({
+      filters: { issue_id: issueId },
+      limit: 100
+    })
+    // Spread to create a new array (copyStore.records is reactive)
+    copies.value = [...copyStore.records]
+  } catch (err) {
+    console.error('Error loading copies:', err)
+    copies.value = []
+  } finally {
+    loadingCopies.value = false
+  }
+}
+
 const handleSubmit = async () => {
   if (!validate()) return
 
@@ -227,15 +301,44 @@ const handleSubmit = async () => {
 
 const handleClose = () => {
   resetForm()
+  copies.value = []
+}
+
+const formatLabel = (format: string): string => {
+  const labels: Record<string, string> = {
+    floppy: 'Floppy',
+    digital: 'Digital',
+    cgc_slab: 'CGC',
+    cbcs_slab: 'CBCS',
+    other: 'Other'
+  }
+  return labels[format] || format
+}
+
+const formatBadgeClass = (format: string): string => {
+  const classes: Record<string, string> = {
+    floppy: 'bg-primary',
+    digital: 'bg-info',
+    cgc_slab: 'bg-warning text-dark',
+    cbcs_slab: 'bg-warning text-dark',
+    other: 'bg-secondary'
+  }
+  return classes[format] || 'bg-secondary'
 }
 
 // ============================================================================
 // Watchers
 // ============================================================================
 
-watch(() => props.modelValue, (newValue) => {
+watch(() => props.modelValue, async (newValue) => {
   if (newValue) {
     resetForm()
+    // Load copies when modal opens with an existing issue
+    if (props.issue?.issue_id) {
+      await loadCopies(props.issue.issue_id)
+    } else {
+      copies.value = []
+    }
   }
 })
 
@@ -250,6 +353,20 @@ watch(() => props.issue, () => {
 .issue-form {
   .row {
     margin-bottom: 0;
+  }
+
+  .copy-cover-thumb {
+    height: 40px;
+    width: auto;
+    max-width: 50px;
+    object-fit: contain;
+    border: 1px solid #dee2e6;
+    border-radius: 2px;
+    background: white;
+  }
+
+  .badge {
+    font-size: 0.75rem;
   }
 }
 </style>

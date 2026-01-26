@@ -112,9 +112,10 @@
             :show-header="false"
             :show-footer="false"
             :show-actions="true"
-            :actions="['edit', 'delete']"
+            :actions="['view', 'edit', 'delete']"
             id-field="issue_id"
             entity-name="issues"
+            @view="viewIssue"
             @edit="editIssue"
             @delete="deleteIssue"
           >
@@ -419,6 +420,11 @@ const addIssue = () => {
 
 const editIssue = (issue: Issue) => {
   editingIssue.value = issue
+  showIssueModal.value = true
+}
+
+const viewIssue = (issue: Issue) => {
+  editingIssue.value = { ...issue }
   showIssueModal.value = true
 }
 

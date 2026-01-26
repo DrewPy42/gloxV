@@ -1,19 +1,17 @@
 meta {
-  name: Volume Issues
+  name: Issue Copies
   type: http
   seq: 2
 }
 
 get {
-  url: {{ServerHost}}/api/issues?volume_id=4521
+  url: {{ServerHost}}/api/copies?issue_id=3417
   body: none
   auth: inherit
 }
 
 params:query {
-  volume_id: 4521
-  ~page: 1
-  ~limit: 200
+  issue_id: 3417
 }
 
 settings {

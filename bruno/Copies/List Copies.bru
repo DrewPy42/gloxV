@@ -1,0 +1,16 @@
+meta {
+  name: List Copies
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{ServerHost}}/api/copies
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
