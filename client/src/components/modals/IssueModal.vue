@@ -112,6 +112,7 @@
               :src="getCoverImageUrl(record.cover_image_path)"
               :alt="record.cover_description || 'Cover'"
               class="copy-cover-thumb"
+              @click="openCoverViewer(record)"
             />
           </template>
           <template #cell-format="{ record }">
@@ -122,12 +123,19 @@
         </DataTable>
       </Card>
     </div>
+
+    <!-- Cover Viewer Modal -->
+    <CoverViewerModal
+      v-model="showCoverViewer"
+      :copy="selectedCopy"
+    />
   </Modal>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { Card, Modal, FormField, DataTable, type TableColumn } from '@/components/common'
+import CoverViewerModal from './CoverViewerModal.vue'
 import { useIssueStore, useCopyStore, type Issue, type Copy } from '@/core'
 import { useImage } from '@/composables'
 
@@ -167,6 +175,8 @@ const loading = ref(false)
 const errors = ref<Record<string, string>>({})
 const copies = ref<Copy[]>([])
 const loadingCopies = ref(false)
+const showCoverViewer = ref(false)
+const selectedCopy = ref<Copy | null>(null)
 
 const defaultFormData = (): Partial<Issue> => ({
   issue_number: '',
@@ -304,6 +314,11 @@ const handleClose = () => {
   copies.value = []
 }
 
+const openCoverViewer = (copy: Copy) => {
+  selectedCopy.value = copy
+  showCoverViewer.value = true
+}
+
 const formatLabel = (format: string): string => {
   const labels: Record<string, string> = {
     floppy: 'Floppy',
@@ -363,6 +378,13 @@ watch(() => props.issue, () => {
     border: 1px solid #dee2e6;
     border-radius: 2px;
     background: white;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
   }
 
   .badge {
