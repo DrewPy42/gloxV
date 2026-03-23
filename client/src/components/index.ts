@@ -1,6 +1,9 @@
 // Common reusable components
 export * from './common'
 
+// Modals
+export * from './modals'
+
 // Pages
 export { default as HomePage } from './pages/HomePage.vue'
 export { default as SeriesPage } from './pages/SeriesPage.vue'

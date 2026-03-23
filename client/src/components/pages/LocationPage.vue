@@ -1,6 +1,16 @@
 <template>
   <div class="location-page">
-    <h1>Storage Locations</h1>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h1 class="mb-0">Storage Locations</h1>
+      <button
+        type="button"
+        class="btn btn-primary"
+        @click="openBulkModal"
+      >
+        <font-awesome-icon :icon="['fas', 'users']" />
+        Bulk Assign Copies
+      </button>
+    </div>
     
     <DataTable
       :records="locationStore.records"
@@ -29,21 +39,31 @@
         {{ formatLocation(record) }}
       </template>
     </DataTable>
+
+    <!-- Bulk Assignment Modal -->
+    <BulkLocationModal
+      v-model="showBulkModal"
+      :selected-copy-ids="selectedCopyIds"
+      @assigned="handleBulkAssigned"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { DataTable, Modal, type TableColumn } from '@/components/common'
+import { DataTable, type TableColumn } from '@/components/common'
+import { BulkLocationModal } from '@/components/modals'
 import { useLocationStore, type Location } from '@/core'
-import { useFormatting } from '@/composables'
+import { useToast } from '@/composables'
 
 const locationStore = useLocationStore()
-const { formatCurrency } = useFormatting()
+const toast = useToast()
 
 const isModalOpen = ref(false)
 const selectedLocation = ref<Location | null>(null)
+const showBulkModal = ref(false)
+const selectedCopyIds = ref<number[]>([])
 
 const columns: TableColumn[] = [
   { key: 'storage_type', label: 'Type', align: 'center' },
@@ -82,6 +102,16 @@ const formatLocation = (record: Location) => {
 const openViewModal = (record: Location) => {
   selectedLocation.value = record
   isModalOpen.value = true
+}
+
+const openBulkModal = () => {
+  showBulkModal.value = true
+}
+
+const handleBulkAssigned = (count: number) => {
+  toast.success(`Successfully assigned ${count} copies`)
+  // Refresh the location data to show updated copy counts
+  locationStore.fetchRecords()
 }
 
 onMounted(() => {

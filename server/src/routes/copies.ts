@@ -371,4 +371,181 @@ router.get('/api/copies/:id/value-history', async (req: Request, res: Response) 
   }
 });
 
+// PUT /api/copies/bulk - Bulk update copies
+router.put('/api/copies/bulk', async (req: Request, res: Response) => {
+  try {
+    const { copy_ids, updates, assign_all_unassigned } = req.body;
+
+    // Handle "assign all unassigned" case
+    if (assign_all_unassigned) {
+      if (!updates || typeof updates !== 'object') {
+        res.status(400).json({ error: 'updates object is required' });
+        return;
+      }
+
+      // Build dynamic SET clause based on provided fields
+      const setFields = [];
+      const values = [];
+
+      if (updates.location_id !== undefined) {
+        setFields.push('location_id = ?');
+        values.push(updates.location_id || null);
+      }
+      if (updates.condition_id !== undefined) {
+        setFields.push('condition_id = ?');
+        values.push(updates.condition_id || null);
+      }
+      if (updates.format !== undefined) {
+        setFields.push('format = ?');
+        values.push(updates.format);
+      }
+      if (updates.purchase_price !== undefined) {
+        setFields.push('purchase_price = ?');
+        values.push(updates.purchase_price || null);
+      }
+      if (updates.current_value !== undefined) {
+        setFields.push('current_value = ?');
+        values.push(updates.current_value || null);
+      }
+      if (updates.value_date !== undefined) {
+        setFields.push('value_date = ?');
+        values.push(updates.value_date || null);
+      }
+      if (updates.purchase_date !== undefined) {
+        setFields.push('purchase_date = ?');
+        values.push(updates.purchase_date || null);
+      }
+      if (updates.purchase_source !== undefined) {
+        setFields.push('purchase_source = ?');
+        values.push(updates.purchase_source || null);
+      }
+      if (updates.grade !== undefined) {
+        setFields.push('grade = ?');
+        values.push(updates.grade || null);
+      }
+      if (updates.certification_number !== undefined) {
+        setFields.push('certification_number = ?');
+        values.push(updates.certification_number || null);
+      }
+      if (updates.file_path !== undefined) {
+        setFields.push('file_path = ?');
+        values.push(updates.file_path || null);
+      }
+      if (updates.notes !== undefined) {
+        setFields.push('notes = ?');
+        values.push(updates.notes || null);
+      }
+
+      if (setFields.length === 0) {
+        res.status(400).json({ error: 'No valid fields to update' });
+        return;
+      }
+
+      const queryString = `
+        UPDATE copy 
+        SET ${setFields.join(', ')}, updated_at = NOW() 
+        WHERE location_id IS NULL 
+        AND deleted_at IS NULL
+      `;
+
+      const result = await execute(queryString, values);
+
+      res.json({ 
+        message: 'Bulk update successful',
+        updated_count: result.affectedRows
+      });
+      return;
+    }
+
+    // Handle normal bulk update case
+    if (!copy_ids || !Array.isArray(copy_ids) || copy_ids.length === 0) {
+      res.status(400).json({ error: 'copy_ids array is required' });
+      return;
+    }
+
+    if (!updates || typeof updates !== 'object') {
+      res.status(400).json({ error: 'updates object is required' });
+      return;
+    }
+
+    // Build dynamic SET clause based on provided fields
+    const setFields = [];
+    const values = [];
+
+    if (updates.location_id !== undefined) {
+      setFields.push('location_id = ?');
+      values.push(updates.location_id || null);
+    }
+    if (updates.condition_id !== undefined) {
+      setFields.push('condition_id = ?');
+      values.push(updates.condition_id || null);
+    }
+    if (updates.format !== undefined) {
+      setFields.push('format = ?');
+      values.push(updates.format);
+    }
+    if (updates.purchase_price !== undefined) {
+      setFields.push('purchase_price = ?');
+      values.push(updates.purchase_price || null);
+    }
+    if (updates.current_value !== undefined) {
+      setFields.push('current_value = ?');
+      values.push(updates.current_value || null);
+    }
+    if (updates.value_date !== undefined) {
+      setFields.push('value_date = ?');
+      values.push(updates.value_date || null);
+    }
+    if (updates.purchase_date !== undefined) {
+      setFields.push('purchase_date = ?');
+      values.push(updates.purchase_date || null);
+    }
+    if (updates.purchase_source !== undefined) {
+      setFields.push('purchase_source = ?');
+      values.push(updates.purchase_source || null);
+    }
+    if (updates.grade !== undefined) {
+      setFields.push('grade = ?');
+      values.push(updates.grade || null);
+    }
+    if (updates.certification_number !== undefined) {
+      setFields.push('certification_number = ?');
+      values.push(updates.certification_number || null);
+    }
+    if (updates.file_path !== undefined) {
+      setFields.push('file_path = ?');
+      values.push(updates.file_path || null);
+    }
+    if (updates.notes !== undefined) {
+      setFields.push('notes = ?');
+      values.push(updates.notes || null);
+    }
+
+    if (setFields.length === 0) {
+      res.status(400).json({ error: 'No valid fields to update' });
+      return;
+    }
+
+    // Add copy_ids to values array
+    values.push(...copy_ids);
+
+    const queryString = `
+      UPDATE copy 
+      SET ${setFields.join(', ')}, updated_at = NOW() 
+      WHERE copy_id IN (${copy_ids.map(() => '?').join(',')}) 
+      AND deleted_at IS NULL
+    `;
+
+    const result = await execute(queryString, values);
+
+    res.json({ 
+      message: 'Bulk update successful',
+      updated_count: result.affectedRows
+    });
+  } catch (err) {
+    console.error('Error bulk updating copies:', err);
+    res.status(500).json({ error: 'Database error occurred' });
+  }
+});
+
 export default router;
