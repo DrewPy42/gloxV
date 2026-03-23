@@ -352,7 +352,6 @@ const {
   toggleSelection: baseToggleSelection, 
   toggleSelectAll: baseToggleSelectAll 
 } = useSelection(props.idField)
-const { setSearch: baseSetSearch, clearSearch: baseClearSearch } = useSearch()
 
 // ============================================================================
 // Computed
