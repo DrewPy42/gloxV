@@ -1,4 +1,4 @@
-import { ref, computed, type Ref, type ComputedRef } from 'vue'
+import { ref, computed, type Ref } from 'vue'
 import { defineStore } from 'pinia'
 import { fetchWrapper, type ApiResponse } from '../functions/fetchWrapper'
 
@@ -142,7 +142,7 @@ export function createBaseStore<T extends Record<string, any>>(
         message.value = `Found ${totalRecords.value} ${config.entityName}`
       } catch (err: any) {
         error.value = err.message || `Error loading ${config.entityName}`
-        message.value = error.value
+        message.value = error.value || ''
         console.error(`Error fetching ${config.entityName}:`, err)
       } finally {
         loading.value = false
@@ -181,7 +181,7 @@ export function createBaseStore<T extends Record<string, any>>(
         }
       } catch (err: any) {
         error.value = err.message || `Error loading ${config.entityName}`
-        message.value = error.value
+        message.value = error.value || ''
         console.error(`Error fetching ${config.entityName} record:`, err)
         return null
       } finally {
@@ -195,7 +195,7 @@ export function createBaseStore<T extends Record<string, any>>(
       message.value = `Creating ${config.entityName}...`
 
       try {
-        const result = await fetchWrapper.post<{ [key: string]: number; message: string }>(
+        const result = await fetchWrapper.post<{ message: string; [key: string]: string | number }>(
           config.baseUrl,
           data
         )
@@ -207,12 +207,12 @@ export function createBaseStore<T extends Record<string, any>>(
         // Return the created record by fetching it
         const newId = result[config.idField]
         if (newId) {
-          return await fetchRecord(newId)
+          return await fetchRecord(Number(newId))
         }
         return null
       } catch (err: any) {
         error.value = err.message || `Error creating ${config.entityName}`
-        message.value = error.value
+        message.value = error.value || ''
         console.error(`Error creating ${config.entityName}:`, err)
         return null
       } finally {
@@ -244,7 +244,7 @@ export function createBaseStore<T extends Record<string, any>>(
         return true
       } catch (err: any) {
         error.value = err.message || `Error updating ${config.entityName}`
-        message.value = error.value
+        message.value = error.value || ''
         console.error(`Error updating ${config.entityName}:`, err)
         return false
       } finally {
@@ -273,7 +273,7 @@ export function createBaseStore<T extends Record<string, any>>(
         return true
       } catch (err: any) {
         error.value = err.message || `Error deleting ${config.entityName}`
-        message.value = error.value
+        message.value = error.value || ''
         console.error(`Error deleting ${config.entityName}:`, err)
         return false
       } finally {
