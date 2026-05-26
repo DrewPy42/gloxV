@@ -10,7 +10,7 @@ interface CopyRow extends RowDataPacket {
   cover_id: number | null;
   condition_id: number | null;
   format: string;
-  purchase_price: number | null;
+  cover_price: number | null;
   current_value: number | null;
   value_date: Date | null;
   purchase_date: Date | null;
@@ -186,7 +186,7 @@ router.post('/api/copies', async (req: Request, res: Response) => {
       cover_id,
       condition_id,
       format,
-      purchase_price,
+      cover_price,
       current_value,
       value_date,
       purchase_date,
@@ -204,7 +204,7 @@ router.post('/api/copies', async (req: Request, res: Response) => {
     }
 
     const result = await execute(
-      `INSERT INTO copy (issue_id, cover_id, condition_id, format, purchase_price,
+      `INSERT INTO copy (issue_id, cover_id, condition_id, format, cover_price,
         current_value, value_date, purchase_date, purchase_source, location_id,
         grade, certification_number, file_path, notes)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -213,7 +213,7 @@ router.post('/api/copies', async (req: Request, res: Response) => {
         cover_id || null,
         condition_id || null,
         format || 'paperback',
-        purchase_price || null,
+        cover_price || null,
         current_value || null,
         value_date || null,
         purchase_date || null,
@@ -253,7 +253,7 @@ router.put('/api/copies/:id', async (req: Request, res: Response) => {
       cover_id,
       condition_id,
       format,
-      purchase_price,
+      cover_price,
       current_value,
       value_date,
       purchase_date,
@@ -289,7 +289,7 @@ router.put('/api/copies/:id', async (req: Request, res: Response) => {
         cover_id = ?,
         condition_id = ?,
         format = COALESCE(?, format),
-        purchase_price = ?,
+        cover_price = ?,
         current_value = ?,
         value_date = ?,
         purchase_date = ?,
@@ -304,7 +304,7 @@ router.put('/api/copies/:id', async (req: Request, res: Response) => {
         cover_id ?? null,
         condition_id ?? null,
         format,
-        purchase_price ?? null,
+        cover_price ?? null,
         current_value ?? null,
         value_date ?? null,
         purchase_date ?? null,
@@ -399,9 +399,9 @@ router.put('/api/copies/bulk', async (req: Request, res: Response) => {
         setFields.push('format = ?');
         values.push(updates.format);
       }
-      if (updates.purchase_price !== undefined) {
-        setFields.push('purchase_price = ?');
-        values.push(updates.purchase_price || null);
+      if (updates.cover_price !== undefined) {
+        setFields.push('cover_price = ?');
+        values.push(updates.cover_price || null);
       }
       if (updates.current_value !== undefined) {
         setFields.push('current_value = ?');
@@ -484,9 +484,9 @@ router.put('/api/copies/bulk', async (req: Request, res: Response) => {
       setFields.push('format = ?');
       values.push(updates.format);
     }
-    if (updates.purchase_price !== undefined) {
-      setFields.push('purchase_price = ?');
-      values.push(updates.purchase_price || null);
+    if (updates.cover_price !== undefined) {
+      setFields.push('cover_price = ?');
+      values.push(updates.cover_price || null);
     }
     if (updates.current_value !== undefined) {
       setFields.push('current_value = ?');

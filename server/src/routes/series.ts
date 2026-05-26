@@ -83,7 +83,7 @@ router.get('/api/series', async (req: Request, res: Response) => {
       LEFT JOIN (
         SELECT i.series_id, 
                COUNT(c.copy_id) as copy_count,
-               SUM(c.purchase_price) as total_cost,
+               SUM(c.cover_price) as total_cost,
                SUM(c.current_value) as total_value
         FROM issue i
         JOIN copy c ON i.issue_id = c.issue_id AND c.deleted_at IS NULL
@@ -163,7 +163,7 @@ router.get('/api/series/:id/summary', async (req: Request, res: Response) => {
         COUNT(DISTINCT v.volume_id) as volume_count,
         COUNT(DISTINCT i.issue_id) as issue_count,
         COUNT(DISTINCT c.copy_id) as copy_count,
-        COALESCE(SUM(c.purchase_price), 0) as total_cost,
+        COALESCE(SUM(c.cover_price), 0) as total_cost,
         COALESCE(SUM(c.current_value), 0) as total_value
       FROM series s
       LEFT JOIN publisher p ON s.publisher_id = p.publisher_id

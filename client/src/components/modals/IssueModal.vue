@@ -214,7 +214,7 @@ const copyColumns: TableColumn[] = [
   { key: 'cover_image_path', label: '', width: '60px' },
   { key: 'format', label: 'Format', width: '100px' },
   { key: 'condition_code', label: 'Cond.', width: '70px' },
-  { key: 'purchase_price', label: 'Cost', type: 'currency', width: '80px' },
+  { key: 'cover_price', label: 'Cost', type: 'currency', width: '80px' },
   { key: 'current_value', label: 'Value', type: 'currency', width: '80px' },
 ]
 

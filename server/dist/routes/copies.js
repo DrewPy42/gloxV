@@ -145,12 +145,12 @@ router.get('/api/copies/:id', async (req, res) => {
 // POST /api/copies - Create a new copy
 router.post('/api/copies', async (req, res) => {
     try {
-        const { issue_id, cover_id, condition_id, format, purchase_price, current_value, value_date, purchase_date, purchase_source, location_id, grade, certification_number, file_path, notes } = req.body;
+        const { issue_id, cover_id, condition_id, format, cover_price, current_value, value_date, purchase_date, purchase_source, location_id, grade, certification_number, file_path, notes } = req.body;
         if (!issue_id) {
             res.status(400).json({ error: 'issue_id is required' });
             return;
         }
-        const result = await (0, db_1.execute)(`INSERT INTO copy (issue_id, cover_id, condition_id, format, purchase_price,
+        const result = await (0, db_1.execute)(`INSERT INTO copy (issue_id, cover_id, condition_id, format, cover_price,
         current_value, value_date, purchase_date, purchase_source, location_id,
         grade, certification_number, file_path, notes)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
@@ -158,7 +158,7 @@ router.post('/api/copies', async (req, res) => {
             cover_id || null,
             condition_id || null,
             format || 'paperback',
-            purchase_price || null,
+            cover_price || null,
             current_value || null,
             value_date || null,
             purchase_date || null,
@@ -188,7 +188,7 @@ router.post('/api/copies', async (req, res) => {
 router.put('/api/copies/:id', async (req, res) => {
     try {
         const id = parseInt(req.params.id);
-        const { cover_id, condition_id, format, purchase_price, current_value, value_date, purchase_date, purchase_source, location_id, grade, certification_number, file_path, notes, track_value_change } = req.body;
+        const { cover_id, condition_id, format, cover_price, current_value, value_date, purchase_date, purchase_source, location_id, grade, certification_number, file_path, notes, track_value_change } = req.body;
         // If tracking value changes and current_value is being updated
         if (track_value_change && current_value !== undefined) {
             // Get current value first
@@ -203,7 +203,7 @@ router.put('/api/copies/:id', async (req, res) => {
         cover_id = ?,
         condition_id = ?,
         format = COALESCE(?, format),
-        purchase_price = ?,
+        cover_price = ?,
         current_value = ?,
         value_date = ?,
         purchase_date = ?,
@@ -217,7 +217,7 @@ router.put('/api/copies/:id', async (req, res) => {
             cover_id ?? null,
             condition_id ?? null,
             format,
-            purchase_price ?? null,
+            cover_price ?? null,
             current_value ?? null,
             value_date ?? null,
             purchase_date ?? null,

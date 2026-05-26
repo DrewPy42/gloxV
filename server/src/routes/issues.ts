@@ -104,7 +104,7 @@ router.get('/api/issues', async (req: Request, res: Response) => {
       LEFT JOIN (
         SELECT issue_id,
                COUNT(*) as copy_count,
-               SUM(purchase_price) as total_cost,
+               SUM(cover_price) as total_cost,
                SUM(current_value) as total_value
         FROM copy
         WHERE deleted_at IS NULL

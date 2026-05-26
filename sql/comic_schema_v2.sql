@@ -271,7 +271,7 @@ CREATE TABLE `copy` (
   `cover_id` INT DEFAULT NULL,  -- Which cover variant this copy has
   `condition_id` INT DEFAULT NULL,
   `format` ENUM('paperback', 'hardcover', 'digital', 'cgc_slab', 'cbcs_slab', 'other') NOT NULL DEFAULT 'paperback',
-  `purchase_price` DECIMAL(10,2) DEFAULT NULL,
+  `cover_price` DECIMAL(10,2) DEFAULT NULL,
   `current_value` DECIMAL(10,2) DEFAULT NULL,
   `value_date` DATE DEFAULT NULL,  -- When the current_value was assessed
   `purchase_date` DATE DEFAULT NULL,
@@ -499,7 +499,7 @@ SELECT
   COUNT(DISTINCT i.issue_id) AS issue_count,
   COUNT(DISTINCT c.copy_id) AS copy_count,
   SUM(c.current_value) AS total_value,
-  SUM(c.purchase_price) AS total_cost
+  SUM(c.cover_price) AS total_cost
 FROM series s
 LEFT JOIN issue i ON s.series_id = i.series_id AND i.deleted_at IS NULL
 LEFT JOIN copy c ON i.issue_id = c.issue_id AND c.deleted_at IS NULL

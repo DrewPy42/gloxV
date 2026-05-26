@@ -18,11 +18,11 @@ router.get('/api/stats', async (req: Request, res: Response) => {
           COUNT(DISTINCT v.volume_id) as volume_count,
           COUNT(DISTINCT i.issue_id) as issue_count,
           COUNT(DISTINCT c.copy_id) as copy_count,
-          COALESCE(SUM(c.purchase_price), 0) as total_cost,
+          COALESCE(SUM(c.cover_price), 0) as total_cost,
           COALESCE(SUM(c.current_value), 0) as total_value,
           CASE 
-            WHEN COALESCE(SUM(c.purchase_price), 0) > 0 
-            THEN (COALESCE(SUM(c.current_value), 0) - COALESCE(SUM(c.purchase_price), 0)) / COALESCE(SUM(c.purchase_price), 0)
+            WHEN COALESCE(SUM(c.cover_price), 0) > 0 
+            THEN (COALESCE(SUM(c.current_value), 0) - COALESCE(SUM(c.cover_price), 0)) / COALESCE(SUM(c.cover_price), 0)
             ELSE 0 
           END as value_change_percent
          FROM series s
@@ -49,7 +49,7 @@ router.get('/api/stats', async (req: Request, res: Response) => {
           COUNT(DISTINCT i.issue_id) as issue_count,
           COUNT(DISTINCT c.copy_id) as copy_count,
           COUNT(DISTINCT ce.collected_edition_id) as collected_edition_count,
-          COALESCE(SUM(c.purchase_price), 0) + COALESCE((SELECT SUM(purchase_price) FROM collected_edition WHERE deleted_at IS NULL), 0) as total_cost,
+          COALESCE(SUM(c.cover_price), 0) + COALESCE((SELECT SUM(cover_price) FROM collected_edition WHERE deleted_at IS NULL), 0) as total_cost,
           COALESCE(SUM(c.current_value), 0) + COALESCE((SELECT SUM(current_value) FROM collected_edition WHERE deleted_at IS NULL), 0) as total_value
          FROM series s
          LEFT JOIN volume v ON s.series_id = v.series_id AND v.deleted_at IS NULL

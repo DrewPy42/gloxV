@@ -123,7 +123,7 @@ export interface Copy extends AuditFields {
     cover_id: number | null;
     condition_id: number | null;
     format: CopyFormat;
-    purchase_price: number | null;
+    cover_price: number | null;
     current_value: number | null;
     value_date: Date | null;
     purchase_date: Date | null;
@@ -146,7 +146,7 @@ export interface CollectedEdition extends AuditFields {
     release_date: Date | null;
     cover_image_path: string | null;
     condition_id: number | null;
-    purchase_price: number | null;
+    cover_price: number | null;
     current_value: number | null;
     value_date: Date | null;
     purchase_date: Date | null;

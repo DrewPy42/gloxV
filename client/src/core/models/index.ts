@@ -239,7 +239,7 @@ export interface Copy extends AuditFields {
   cover_id?: number
   condition_id?: number
   format: CopyFormat
-  purchase_price?: number
+  cover_price?: number
   current_value?: number
   value_date?: string
   purchase_date?: string
