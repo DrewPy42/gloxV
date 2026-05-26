@@ -212,7 +212,7 @@ router.post('/api/copies', async (req: Request, res: Response) => {
         issue_id,
         cover_id || null,
         condition_id || null,
-        format || 'floppy',
+        format || 'paperback',
         purchase_price || null,
         current_value || null,
         value_date || null,

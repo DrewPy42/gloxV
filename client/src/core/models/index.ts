@@ -231,7 +231,7 @@ export interface Cover extends AuditFields {
 // Copy
 // ============================================================================
 
-export type CopyFormat = 'floppy' | 'digital' | 'cgc_slab' | 'cbcs_slab' | 'other'
+export type CopyFormat = 'paperback' | 'hardcover' | 'digital' | 'cgc_slab' | 'cbcs_slab' | 'other'
 
 export interface Copy extends AuditFields {
   copy_id: number

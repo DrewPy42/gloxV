@@ -15,18 +15,22 @@
         </div>
       </div>
     </footer>
+
+    <ToastContainer />
   </div>
 </template>
 
 <script>
 import { RouterView } from 'vue-router'
 import mainMenu from './components/menus/mainMenu.vue'
+import { ToastContainer } from '@/components/common'
 import { computed, ref, onMounted } from 'vue'
 
 export default {
   components: {
     mainMenu,
-    RouterView
+    RouterView,
+    ToastContainer
   },
   setup() {
     const message = ref('')

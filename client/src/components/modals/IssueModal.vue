@@ -321,7 +321,8 @@ const openCoverViewer = (copy: Copy) => {
 
 const formatLabel = (format: string): string => {
   const labels: Record<string, string> = {
-    floppy: 'Floppy',
+    paperback: 'Paperback',
+    hardcover: 'Hardcover',
     digital: 'Digital',
     cgc_slab: 'CGC',
     cbcs_slab: 'CBCS',
@@ -332,7 +333,8 @@ const formatLabel = (format: string): string => {
 
 const formatBadgeClass = (format: string): string => {
   const classes: Record<string, string> = {
-    floppy: 'bg-primary',
+    paperback: 'bg-primary',
+    hardcover: 'bg-success',
     digital: 'bg-info',
     cgc_slab: 'bg-warning text-dark',
     cbcs_slab: 'bg-warning text-dark',

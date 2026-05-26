@@ -270,7 +270,7 @@ CREATE TABLE `copy` (
   `issue_id` INT NOT NULL,
   `cover_id` INT DEFAULT NULL,  -- Which cover variant this copy has
   `condition_id` INT DEFAULT NULL,
-  `format` ENUM('floppy', 'digital', 'cgc_slab', 'cbcs_slab', 'other') NOT NULL DEFAULT 'floppy',
+  `format` ENUM('paperback', 'hardcover', 'digital', 'cgc_slab', 'cbcs_slab', 'other') NOT NULL DEFAULT 'paperback',
   `purchase_price` DECIMAL(10,2) DEFAULT NULL,
   `current_value` DECIMAL(10,2) DEFAULT NULL,
   `value_date` DATE DEFAULT NULL,  -- When the current_value was assessed
