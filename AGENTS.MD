@@ -115,7 +115,7 @@ The application uses a normalized MySQL database with the following main entitie
 - **publisher** - Comic publishers with logos
 - **comic_age** - Comic eras (Golden, Silver, Bronze, Modern, etc.)
 - **condition_code** - Grading conditions (NM, VF, FN, etc.)
-- **location** - Storage locations (cabinets, drawers, digital)
+- **location** - Storage locations (cabinets, dividers, drawers, digital)
 
 ### Creator Tables
 - **person** - Creators (writers, artists, etc.)

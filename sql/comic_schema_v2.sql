@@ -109,7 +109,7 @@ CREATE TABLE `person_alias` (
 DROP TABLE IF EXISTS `location`;
 CREATE TABLE `location` (
   `location_id` INT NOT NULL AUTO_INCREMENT,
-  `storage_type` ENUM('cabinet', 'display', 'bookshelf', 'digital') NOT NULL,
+  `storage_type` ENUM('cabinet', 'divider', 'display', 'bookshelf', 'digital') NOT NULL,
   `location_name` VARCHAR(100) DEFAULT NULL,
   -- Cabinet-specific fields
   `cabinet_number` INT DEFAULT NULL,

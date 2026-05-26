@@ -71,7 +71,7 @@ export interface PersonAlias {
 // Location
 // ============================================================================
 
-export type StorageType = 'cabinet' | 'display' | 'bookshelf' | 'digital';
+export type StorageType = 'cabinet' | 'divider' | 'display' | 'bookshelf' | 'digital';
 
 export interface Location extends AuditFields {
   location_id: number;

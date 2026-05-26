@@ -76,6 +76,7 @@ const columns: TableColumn[] = [
 
 const getTypeBadgeClass = (type: string) => ({
   'bg-primary': type === 'cabinet',
+  'bg-warning': type === 'divider',
   'bg-success': type === 'display',
   'bg-info': type === 'bookshelf',
   'bg-secondary': type === 'digital'
@@ -84,6 +85,7 @@ const getTypeBadgeClass = (type: string) => ({
 const getTypeIcon = (type: string) => {
   switch (type) {
     case 'cabinet': return 'box-archive'
+    case 'divider': return 'folder'
     case 'display': return 'display'
     case 'bookshelf': return 'book'
     case 'digital': return 'cloud'
