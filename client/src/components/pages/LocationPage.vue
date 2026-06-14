@@ -60,7 +60,7 @@
     <LocationFormModal
       v-model="showFormModal"
       :location="editingLocation"
-      :parent-location-id="addingChildParentId"
+      :parent-location="addingChildParent"
       @saved="onFormSaved"
     />
 
@@ -94,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, provide, onMounted } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { LocationTreeNode } from '@/components/common'
 import { LocationFormModal, LocationMoveModal, LocationLinkModal, LocationCopiesModal, BulkLocationModal } from '@/components/modals'
@@ -121,7 +121,7 @@ const showCopiesModal = ref(false)
 const showBulkModal = ref(false)
 
 const editingLocation = ref<Location | null>(null)
-const addingChildParentId = ref<number | null>(null)
+const addingChildParent = ref<TreeNode | null>(null)
 const movingLocation = ref<TreeNode | null>(null)
 const linkingLocation = ref<TreeNode | null>(null)
 const copiesLocation = ref<TreeNode | null>(null)
@@ -167,20 +167,15 @@ function findNode(nodes: TreeNode[], id: number): TreeNode | null {
   return null
 }
 
-// Expand/collapse all — we use a key trick: re-render with a flag stored in a
-// Set so each LocationTreeNode can check it. Simpler: emit an event via provide/inject.
-// For now: toggle a global ref that child nodes watch via provide.
-const treeKey = ref(0) // bump to force re-render at default state
 const expandAllFlag = ref<boolean | null>(null)
+provide('expandAllFlag', expandAllFlag)
 
 function expandAll() {
   expandAllFlag.value = true
-  treeKey.value++
 }
 
 function collapseAll() {
   expandAllFlag.value = false
-  treeKey.value++
 }
 
 // ============================================================================
@@ -193,19 +188,19 @@ function onSelect(node: TreeNode) {
 
 function openAddRoot() {
   editingLocation.value = null
-  addingChildParentId.value = null
+  addingChildParent.value = null
   showFormModal.value = true
 }
 
 function openAddChild(node: TreeNode) {
   editingLocation.value = null
-  addingChildParentId.value = node.location_id
+  addingChildParent.value = node
   showFormModal.value = true
 }
 
 function openEdit(node: TreeNode) {
   editingLocation.value = node as unknown as Location
-  addingChildParentId.value = null
+  addingChildParent.value = null
   showFormModal.value = true
 }
 

@@ -103,12 +103,12 @@ import type { Location, StorageType } from '@/core'
 interface Props {
   modelValue: boolean
   location?: Location | null
-  parentLocationId?: number | null
+  parentLocation?: Location | null  // the parent node when adding a child
 }
 
 const props = withDefaults(defineProps<Props>(), {
   location: null,
-  parentLocationId: null
+  parentLocation: null
 })
 
 const emit = defineEmits<{
@@ -172,8 +172,29 @@ const storageTypes: { value: StorageType; label: string }[] = [
 watch(() => props.modelValue, v => { isOpen.value = v })
 watch(isOpen, v => emit('update:modelValue', v))
 
+// Derive sensible child type and pre-fill inherited numeric fields from the parent
+function childDefaultsFrom(parent: Location): Partial<LocationForm> {
+  const childType: StorageType = (
+    parent.storage_type === 'cabinet'   ? 'drawer'  :
+    parent.storage_type === 'drawer'    ? 'divider' :
+    parent.storage_type === 'bookshelf' ? 'shelf'   :
+    parent.storage_type === 'display'   ? 'shelf'   :
+    parent.storage_type === 'box'       ? 'divider' :
+    parent.storage_type === 'digital'   ? 'folder'  :
+    parent.storage_type === 'folder'    ? 'folder'  :
+    'cabinet'
+  )
+  return {
+    storage_type:   childType,
+    cabinet_number: parent.cabinet_number ?? null,
+    drawer_number:  parent.drawer_number  ?? null,
+    divider:        '',  // always blank — user fills in the new divider label
+  }
+}
+
 watch(() => props.location, loc => {
   if (loc) {
+    // Editing an existing location — populate from its own values
     form.value = {
       storage_type: loc.storage_type,
       location_name: loc.location_name ?? '',
@@ -187,10 +208,20 @@ watch(() => props.location, loc => {
       notes: loc.notes ?? '',
       is_insured_separately: loc.is_insured_separately ?? false
     }
+  } else if (props.parentLocation) {
+    // Adding a child — inherit context from the parent
+    form.value = { ...defaultForm(), ...childDefaultsFrom(props.parentLocation) }
   } else {
     form.value = defaultForm()
   }
 }, { immediate: true })
+
+// Also re-initialise when the parentLocation changes (e.g. opening for different nodes)
+watch(() => props.parentLocation, parent => {
+  if (!props.location && parent) {
+    form.value = { ...defaultForm(), ...childDefaultsFrom(parent) }
+  }
+})
 
 // ============================================================================
 // Methods
@@ -216,8 +247,8 @@ async function save() {
       notes:               form.value.notes             || undefined,
       is_insured_separately: form.value.is_insured_separately,
     }
-    if (props.parentLocationId != null && !props.location) {
-      payload.parent_location_id = props.parentLocationId
+    if (props.parentLocation != null && !props.location) {
+      payload.parent_location_id = props.parentLocation.location_id
     }
     emit('saved', payload)
     isOpen.value = false

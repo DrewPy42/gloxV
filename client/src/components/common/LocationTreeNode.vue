@@ -94,7 +94,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, inject, watch } from 'vue'
+import type { Ref } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { useFormatting } from '@/composables'
 import type { LocationTreeNode as TreeNode, LocationLink } from '@/core'
@@ -132,6 +133,12 @@ const emit = defineEmits<{
 
 const expanded = ref(props.depth < 1)
 const { formatCurrency } = useFormatting()
+
+const expandAllFlag = inject<Ref<boolean | null>>('expandAllFlag', ref(null))
+watch(expandAllFlag, (flag) => {
+  if (flag === true) expanded.value = true
+  else if (flag === false) expanded.value = false
+})
 
 // ============================================================================
 // Computed

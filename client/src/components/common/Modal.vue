@@ -2,12 +2,14 @@
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="modelValue" class="modal-backdrop" @click.self="handleBackdropClick">
-        <div 
-          class="modal-container" 
+        <div
+          ref="containerRef"
+          class="modal-container"
           :class="[sizeClass, { 'modal-fullscreen': fullscreen }]"
           role="dialog"
           :aria-labelledby="titleId"
           aria-modal="true"
+          tabindex="-1"
         >
           <!-- Header -->
           <div class="modal-header" v-if="showHeader">
@@ -68,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 // ============================================================================
@@ -127,6 +129,8 @@ const emit = defineEmits<{
 // Computed
 // ============================================================================
 
+const containerRef = ref<HTMLElement | null>(null)
+
 const titleId = computed(() => `modal-title-${Math.random().toString(36).substr(2, 9)}`)
 
 const sizeClass = computed(() => {
@@ -171,9 +175,14 @@ const handleEscapeKey = (event: KeyboardEvent) => {
 // Lifecycle
 // ============================================================================
 
-watch(() => props.modelValue, (isOpen) => {
+watch(() => props.modelValue, async (isOpen) => {
   if (isOpen) {
     document.body.style.overflow = 'hidden'
+    await nextTick()
+    const focusable = containerRef.value?.querySelector<HTMLElement>(
+      'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])'
+    )
+    ;(focusable ?? containerRef.value)?.focus()
   } else {
     document.body.style.overflow = ''
   }

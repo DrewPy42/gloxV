@@ -54,6 +54,13 @@ export default defineConfig({
       }
     }
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        silenceDeprecations: ['import', 'global-builtin'],
+      },
+    },
+  },
   resolve: {
     /**
      * @type {Record<string, string>}
