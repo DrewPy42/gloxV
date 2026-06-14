@@ -71,10 +71,20 @@ export interface PersonAlias {
 // Location
 // ============================================================================
 
-export type StorageType = 'cabinet' | 'divider' | 'display' | 'bookshelf' | 'digital';
+export type StorageType =
+  | 'cabinet'
+  | 'drawer'
+  | 'divider'
+  | 'bookshelf'
+  | 'shelf'
+  | 'display'
+  | 'box'
+  | 'folder'
+  | 'digital';
 
 export interface Location extends AuditFields {
   location_id: number;
+  parent_location_id: number | null;
   storage_type: StorageType;
   location_name: string | null;
   cabinet_number: number | null;
@@ -86,6 +96,14 @@ export interface Location extends AuditFields {
   backup_path: string | null;
   notes: string | null;
   is_insured_separately: boolean;
+}
+
+export interface LocationLink {
+  location_link_id: number;
+  from_location_id: number;
+  to_location_id: number;
+  notes: string | null;
+  created_at: Date;
 }
 
 // ============================================================================

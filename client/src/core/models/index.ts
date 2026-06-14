@@ -91,10 +91,20 @@ export interface PersonAlias {
 // Location
 // ============================================================================
 
-export type StorageType = 'cabinet' | 'divider' | 'display' | 'bookshelf' | 'digital'
+export type StorageType =
+  | 'cabinet'
+  | 'drawer'
+  | 'divider'
+  | 'bookshelf'
+  | 'shelf'
+  | 'display'
+  | 'box'
+  | 'folder'
+  | 'digital'
 
 export interface Location extends AuditFields {
   location_id: number
+  parent_location_id?: number | null
   storage_type: StorageType
   location_name?: string
   cabinet_number?: number
@@ -110,6 +120,28 @@ export interface Location extends AuditFields {
   series_count?: number
   copy_count?: number
   total_value?: number
+}
+
+export interface LocationTreeNode extends Location {
+  children: LocationTreeNode[]
+}
+
+export interface LocationLink {
+  location_link_id: number
+  from_location_id: number
+  to_location_id: number
+  notes?: string
+  created_at?: string
+  // Joined
+  from_location_name?: string
+  from_storage_type?: string
+  to_location_name?: string
+  to_storage_type?: string
+}
+
+export interface LocationCounts {
+  direct: { copy_count: number; total_value: number }
+  rollup: { copy_count: number; total_value: number }
 }
 
 // ============================================================================

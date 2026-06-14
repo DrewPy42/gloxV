@@ -1,128 +1,299 @@
 <template>
   <div class="location-page">
+
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h1 class="mb-0">Storage Locations</h1>
-      <button
-        type="button"
-        class="btn btn-primary"
-        @click="openBulkModal"
-      >
-        <font-awesome-icon :icon="['fas', 'users']" />
-        Bulk Assign Copies
-      </button>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary btn-sm" @click="expandAll">Expand all</button>
+        <button class="btn btn-outline-secondary btn-sm" @click="collapseAll">Collapse all</button>
+        <button class="btn btn-primary" @click="openAddRoot">
+          <font-awesome-icon :icon="['fas', 'plus']" class="me-1" />
+          Add Location
+        </button>
+        <button class="btn btn-secondary" @click="openBulkModal">
+          <font-awesome-icon :icon="['fas', 'users']" />
+          Bulk Assign
+        </button>
+      </div>
     </div>
-    
-    <DataTable
-      :records="locationStore.records"
-      :columns="columns"
-      :loading="locationStore.loading"
-      :total-records="locationStore.totalRecords"
-      :total-pages="locationStore.totalPages"
-      :current-page="locationStore.currentPage"
-      :per-page="locationStore.perPage"
-      id-field="location_id"
-      entity-name="locations"
-      :show-add-button="true"
-      :actions="['view', 'edit', 'delete']"
-      @page-changed="locationStore.setPage"
-      @per-page-changed="locationStore.setPerPage"
-      @view="openViewModal"
-    >
-      <template #cell-storage_type="{ record }">
-        <span class="badge" :class="getTypeBadgeClass(record.storage_type)">
-          <font-awesome-icon :icon="['fas', getTypeIcon(record.storage_type)]" />
-          {{ record.storage_type }}
-        </span>
-      </template>
 
-      <template #cell-location_display="{ record }">
-        {{ formatLocation(record) }}
-      </template>
-    </DataTable>
+    <!-- Loading -->
+    <div v-if="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+    </div>
 
-    <!-- Bulk Assignment Modal -->
+    <!-- Empty state -->
+    <div v-else-if="!tree.length" class="text-center py-5 text-muted">
+      <font-awesome-icon :icon="['fas', 'box-archive']" size="3x" class="mb-3 opacity-25" />
+      <p>No locations yet. Add one to get started.</p>
+    </div>
+
+    <!-- Tree -->
+    <div v-else class="tree-container card">
+      <div class="card-body p-2">
+        <LocationTreeNode
+          v-for="root in tree"
+          :key="root.location_id"
+          :node="root"
+          :depth="0"
+          :all-links="allLinks"
+          :selected-id="selectedId"
+          @add-child="openAddChild"
+          @view-copies="openViewCopies"
+          @move="openMove"
+          @set-link="openLink"
+          @edit="openEdit"
+          @delete="confirmDelete"
+          @select="onSelect"
+        />
+      </div>
+    </div>
+
+    <!-- Warning: non-leaf assignment -->
+    <div v-if="selectedHasChildren" class="alert alert-warning mt-3 py-2 small">
+      <font-awesome-icon :icon="['fas', 'triangle-exclamation']" class="me-1" />
+      The selected location has child locations. Copies assigned here won't appear under those children.
+    </div>
+
+    <!-- Modals -->
+    <LocationFormModal
+      v-model="showFormModal"
+      :location="editingLocation"
+      :parent-location-id="addingChildParentId"
+      @saved="onFormSaved"
+    />
+
+    <LocationMoveModal
+      v-model="showMoveModal"
+      :location="movingLocation"
+      :tree="tree"
+      @moved="onMoved"
+    />
+
+    <LocationLinkModal
+      v-model="showLinkModal"
+      :location="linkingLocation"
+      :all-links="allLinks"
+      :tree="tree"
+      @add-link="onAddLink"
+      @remove-link="onRemoveLink"
+    />
+
     <BulkLocationModal
       v-model="showBulkModal"
-      :selected-copy-ids="selectedCopyIds"
+      :selected-copy-ids="[]"
       @assigned="handleBulkAssigned"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { DataTable, type TableColumn } from '@/components/common'
-import { BulkLocationModal } from '@/components/modals'
-import { useLocationStore, type Location } from '@/core'
+import { LocationTreeNode } from '@/components/common'
+import { LocationFormModal, LocationMoveModal, LocationLinkModal, BulkLocationModal } from '@/components/modals'
+import { useLocationStoreExtended } from '@/core'
 import { useToast } from '@/composables'
+import type { LocationTreeNode as TreeNode, LocationLink, Location } from '@/core'
 
-const locationStore = useLocationStore()
+const store = useLocationStoreExtended()
 const toast = useToast()
 
-const isModalOpen = ref(false)
-const selectedLocation = ref<Location | null>(null)
+// ============================================================================
+// State
+// ============================================================================
+
+const loading = ref(false)
+const tree = ref<TreeNode[]>([])
+const allLinks = ref<LocationLink[]>([])
+const selectedId = ref<number | null>(null)
+
+const showFormModal = ref(false)
+const showMoveModal = ref(false)
+const showLinkModal = ref(false)
 const showBulkModal = ref(false)
-const selectedCopyIds = ref<number[]>([])
 
-const columns: TableColumn[] = [
-  { key: 'storage_type', label: 'Type', align: 'center' },
-  { key: 'location_display', label: 'Location' },
-  { key: 'location_name', label: 'Name' },
-  { key: 'series_count', label: 'Series', align: 'center' },
-  { key: 'copy_count', label: 'Copies', align: 'center' },
-  { key: 'total_value', label: 'Value', align: 'center', type: 'currency' }
-]
+const editingLocation = ref<Location | null>(null)
+const addingChildParentId = ref<number | null>(null)
+const movingLocation = ref<TreeNode | null>(null)
+const linkingLocation = ref<TreeNode | null>(null)
 
-const getTypeBadgeClass = (type: string) => ({
-  'bg-primary': type === 'cabinet',
-  'bg-warning': type === 'divider',
-  'bg-success': type === 'display',
-  'bg-info': type === 'bookshelf',
-  'bg-secondary': type === 'digital'
+// ============================================================================
+// Computed
+// ============================================================================
+
+const selectedHasChildren = computed(() => {
+  if (!selectedId.value) return false
+  const node = findNode(tree.value, selectedId.value)
+  return (node?.children.length ?? 0) > 0
 })
 
-const getTypeIcon = (type: string) => {
-  switch (type) {
-    case 'cabinet': return 'box-archive'
-    case 'divider': return 'folder'
-    case 'display': return 'display'
-    case 'bookshelf': return 'book'
-    case 'digital': return 'cloud'
-    default: return 'folder'
+// ============================================================================
+// Data loading
+// ============================================================================
+
+async function loadAll() {
+  loading.value = true
+  try {
+    const [treeData, links] = await Promise.all([
+      store.fetchTree(),
+      store.fetchAllLinks()
+    ])
+    tree.value = treeData
+    allLinks.value = links
+  } finally {
+    loading.value = false
   }
 }
 
-const formatLocation = (record: Location) => {
-  const parts = []
-  if (record.cabinet_number) parts.push(`Cabinet ${record.cabinet_number}`)
-  if (record.drawer_number) parts.push(`Drawer ${record.drawer_number}`)
-  if (record.divider) parts.push(record.divider)
-  return parts.join(' / ') || '—'
+// ============================================================================
+// Tree helpers
+// ============================================================================
+
+function findNode(nodes: TreeNode[], id: number): TreeNode | null {
+  for (const n of nodes) {
+    if (n.location_id === id) return n
+    const found = findNode(n.children, id)
+    if (found) return found
+  }
+  return null
 }
 
-const openViewModal = (record: Location) => {
-  selectedLocation.value = record
-  isModalOpen.value = true
+// Expand/collapse all — we use a key trick: re-render with a flag stored in a
+// Set so each LocationTreeNode can check it. Simpler: emit an event via provide/inject.
+// For now: toggle a global ref that child nodes watch via provide.
+const treeKey = ref(0) // bump to force re-render at default state
+const expandAllFlag = ref<boolean | null>(null)
+
+function expandAll() {
+  expandAllFlag.value = true
+  treeKey.value++
 }
 
-const openBulkModal = () => {
+function collapseAll() {
+  expandAllFlag.value = false
+  treeKey.value++
+}
+
+// ============================================================================
+// Action handlers
+// ============================================================================
+
+function onSelect(node: TreeNode) {
+  selectedId.value = node.location_id
+}
+
+function openAddRoot() {
+  editingLocation.value = null
+  addingChildParentId.value = null
+  showFormModal.value = true
+}
+
+function openAddChild(node: TreeNode) {
+  editingLocation.value = null
+  addingChildParentId.value = node.location_id
+  showFormModal.value = true
+}
+
+function openEdit(node: TreeNode) {
+  editingLocation.value = node as unknown as Location
+  addingChildParentId.value = null
+  showFormModal.value = true
+}
+
+function openMove(node: TreeNode) {
+  movingLocation.value = node
+  showMoveModal.value = true
+}
+
+function openLink(node: TreeNode) {
+  linkingLocation.value = node
+  showLinkModal.value = true
+}
+
+function openViewCopies(node: TreeNode) {
+  toast.info(`Viewing copies for "${node.location_name || node.location_id}" — coming in Phase 4`)
+}
+
+function openBulkModal() {
   showBulkModal.value = true
 }
 
-const handleBulkAssigned = (count: number) => {
-  toast.success(`Successfully assigned ${count} copies`)
-  // Refresh the location data to show updated copy counts
-  locationStore.fetchRecords()
+async function onFormSaved(data: Partial<Location>) {
+  try {
+    if (editingLocation.value) {
+      await store.updateRecord(editingLocation.value.location_id, data)
+      toast.success('Location updated')
+    } else {
+      await store.createRecord(data)
+      toast.success('Location created')
+    }
+    await loadAll()
+  } catch {
+    toast.error('Failed to save location')
+  }
 }
 
-onMounted(() => {
-  locationStore.fetchRecords()
-})
+async function onMoved(newParentId: number | null) {
+  if (!movingLocation.value) return
+  const ok = await store.moveLocation(movingLocation.value.location_id, newParentId)
+  if (ok) {
+    toast.success('Location moved')
+    await loadAll()
+  } else {
+    toast.error('Failed to move location')
+  }
+}
+
+async function onAddLink(fromId: number, toId: number, notes: string) {
+  const ok = await store.createLink(fromId, toId, notes || undefined)
+  if (ok) {
+    toast.success('Continuation link added')
+    allLinks.value = await store.fetchAllLinks()
+  } else {
+    toast.error('Failed to add link')
+  }
+}
+
+async function onRemoveLink(linkId: number) {
+  const ok = await store.deleteLink(linkId)
+  if (ok) {
+    toast.success('Link removed')
+    allLinks.value = await store.fetchAllLinks()
+  } else {
+    toast.error('Failed to remove link')
+  }
+}
+
+async function confirmDelete(node: TreeNode) {
+  if (!confirm(`Delete "${node.location_name || node.storage_type}"? This cannot be undone.`)) return
+  const ok = await store.deleteRecord(node.location_id)
+  if (ok) {
+    toast.success('Location deleted')
+    await loadAll()
+  } else {
+    toast.error('Failed to delete location — it may have child locations or assigned copies')
+  }
+}
+
+function handleBulkAssigned(count: number) {
+  toast.success(`Successfully assigned ${count} copies`)
+}
+
+// ============================================================================
+// Lifecycle
+// ============================================================================
+
+onMounted(loadAll)
 </script>
 
 <style scoped lang="scss">
 .location-page {
   padding: 1rem;
+}
+
+.tree-container {
+  min-height: 200px;
 }
 </style>

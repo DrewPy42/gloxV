@@ -1,23 +1,25 @@
 import { createBaseStore } from './baseStore'
-import { fetchWrapper } from '../functions/fetchWrapper'
 import type {
-  Series,
-  Volume,
-  Issue,
+  CollectedEdition,
+  CollectionStats,
   Copy,
-  Publisher,
+  Cover,
+  HighValueCopy,
+  Issue,
+  IssueCredit,
   Location,
+  Person,
+  Publisher,
+  PublisherStats,
+  Series,
   Storyline,
   StorylineIssue,
-  Cover,
-  CollectedEdition,
   Tag,
-  Person,
-  IssueCredit,
-  CollectionStats,
-  PublisherStats,
-  HighValueCopy
-} from '../models'
+  Volume
+} from '@/core'
+import { fetchWrapper } from '@/core'
+import { ref } from 'vue'
+import { defineStore } from 'pinia'
 
 const API_BASE = 'http://localhost:3000/api'
 
@@ -37,8 +39,8 @@ export const useSeriesStoreExtended = () => {
 
   const fetchSeriesSummary = async (id: number) => {
     try {
-      const data = await fetchWrapper.get<Series>(`${API_BASE}/series/${id}/summary`)
-      return data
+
+      return await fetchWrapper.get<Series>(`${API_BASE}/series/${id}/summary`)
     } catch (err) {
       console.error('Error fetching series summary:', err)
       return null
@@ -198,19 +200,122 @@ export const useLocationStoreExtended = () => {
 
   const fetchCabinetContents = async (cabinetNumber: number) => {
     try {
-      const data = await fetchWrapper.get<{ cabinet_number: number; drawers: any[] }>(
+
+      return await fetchWrapper.get<{ cabinet_number: number; drawers: any[] }>(
         `${API_BASE}/locations/cabinet/${cabinetNumber}`
       )
-      return data
     } catch (err) {
       console.error('Error fetching cabinet contents:', err)
       return null
     }
   }
 
+  const fetchTree = async () => {
+    try {
+      const data = await fetchWrapper.get<{ tree: import('../models').LocationTreeNode[] }>(
+        `${API_BASE}/locations/tree`
+      )
+      return data.tree
+    } catch (err) {
+      console.error('Error fetching location tree:', err)
+      return []
+    }
+  }
+
+  const fetchPath = async (id: number) => {
+    try {
+      const data = await fetchWrapper.get<{ path: import('../models').Location[] }>(
+        `${API_BASE}/locations/${id}/path`
+      )
+      return data.path
+    } catch (err) {
+      console.error('Error fetching location path:', err)
+      return []
+    }
+  }
+
+  const fetchCounts = async (id: number) => {
+    try {
+
+      return await fetchWrapper.get<import('../models').LocationCounts>(
+        `${API_BASE}/locations/${id}/counts`
+      )
+    } catch (err) {
+      console.error('Error fetching location counts:', err)
+      return null
+    }
+  }
+
+  const fetchLocationLinks = async (id: number) => {
+    try {
+
+      return await fetchWrapper.get<{
+        continues_to: import('../models').LocationLink[]
+        overflow_from: import('../models').LocationLink[]
+      }>(`${API_BASE}/locations/${id}/links`)
+    } catch (err) {
+      console.error('Error fetching location links:', err)
+      return { continues_to: [], overflow_from: [] }
+    }
+  }
+
+  const fetchAllLinks = async () => {
+    try {
+      const data = await fetchWrapper.get<{ results: import('../models').LocationLink[] }>(
+        `${API_BASE}/location-links`
+      )
+      return data.results
+    } catch (err) {
+      console.error('Error fetching all location links:', err)
+      return []
+    }
+  }
+
+  const moveLocation = async (id: number, newParentId: number | null) => {
+    try {
+      await fetchWrapper.put(`${API_BASE}/locations/${id}/move`, { parent_location_id: newParentId })
+      return true
+    } catch (err) {
+      console.error('Error moving location:', err)
+      return false
+    }
+  }
+
+  const createLink = async (fromId: number, toId: number, notes?: string) => {
+    try {
+      await fetchWrapper.post(`${API_BASE}/location-links`, {
+        from_location_id: fromId,
+        to_location_id: toId,
+        notes: notes ?? null
+      })
+      return true
+    } catch (err) {
+      console.error('Error creating location link:', err)
+      return false
+    }
+  }
+
+  const deleteLink = async (linkId: number) => {
+    try {
+      await fetchWrapper.delete(`${API_BASE}/location-links/${linkId}`)
+      return true
+    } catch (err) {
+      console.error('Error deleting location link:', err)
+      return false
+    }
+  }
+
   return {
     ...baseStore,
-    fetchCabinetContents
+    fetchCabinetContents,
+    fetchTree,
+    fetchPath,
+    fetchCounts,
+    fetchLocationLinks,
+    fetchAllLinks,
+    moveLocation,
+    createLink,
+    deleteLink
   }
 }
 
@@ -230,12 +335,12 @@ export function useStorylineStoreExtended() {
 
   const fetchStorylineWithIssues = async (id: number) => {
     try {
-      const data = await fetchWrapper.get<{
+
+      return await fetchWrapper.get<{
         storyline: Storyline
         issues: StorylineIssue[]
         series: { series_id: number; title: string }[]
       }>(`${API_BASE}/storylines/${id}`)
-      return data
     } catch (err) {
       console.error('Error fetching storyline with issues:', err)
       return null
@@ -423,9 +528,6 @@ export const useCreditStoreExtended = () => {
 // Stats Store (read-only)
 // ============================================================================
 
-import { ref } from 'vue'
-import { defineStore } from 'pinia'
-
 export const useStatsStore = defineStore('stats', () => {
   const collectionStats = ref<CollectionStats | null>(null)
   const publisherStats = ref<PublisherStats[]>([])
@@ -481,8 +583,8 @@ export const useStatsStore = defineStore('stats', () => {
 
   const fetchSeriesStats = async (seriesId: number) => {
     try {
-      const data = await fetchWrapper.get<any>(`${API_BASE}/stats?series_id=${seriesId}`)
-      return data
+
+      return await fetchWrapper.get<any>(`${API_BASE}/stats?series_id=${seriesId}`)
     } catch (err: any) {
       error.value = err.message
       return null

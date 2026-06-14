@@ -1,4 +1,7 @@
 export { default as BulkLocationModal } from './BulkLocationModal.vue'
+export { default as LocationFormModal } from './LocationFormModal.vue'
+export { default as LocationMoveModal } from './LocationMoveModal.vue'
+export { default as LocationLinkModal } from './LocationLinkModal.vue'
 export { default as IssueModal } from './IssueModal.vue'
 export { default as CoverViewerModal } from './CoverViewerModal.vue'
 // export { default as CopyModal } from './CopyModal.vue'
