@@ -1,4 +1,4 @@
-import { ref, computed, type Ref } from 'vue'
+import { ref, computed } from 'vue'
 
 // ============================================================================
 // Formatting composable
@@ -425,4 +425,47 @@ export function useToast() {
     warning,
     info
   }
+}
+
+// ============================================================================
+// Location path composable
+// ============================================================================
+
+import type { Location } from '@/core'
+
+export function useLocationPath(locations: Location[]) {
+  const parentMap = new Map<number, Location>()
+  for (const loc of locations) {
+    parentMap.set(loc.location_id, loc)
+  }
+
+  function segmentFor(loc: Location): string {
+    if (loc.location_name) return loc.location_name
+    const parts: string[] = []
+    if (loc.cabinet_number) parts.push(`Cabinet ${loc.cabinet_number}`)
+    if (loc.drawer_number) parts.push(`Drawer ${loc.drawer_number}`)
+    if (loc.divider) parts.push(loc.divider)
+    return parts.join(' / ') || loc.storage_type
+  }
+
+  function pathFor(locationId: number | null | undefined): string {
+    if (!locationId) return '—'
+    const segments: string[] = []
+    let current: Location | undefined = parentMap.get(locationId)
+    while (current) {
+      segments.unshift(segmentFor(current))
+      current = current.parent_location_id ? parentMap.get(current.parent_location_id) : undefined
+    }
+    return segments.join(' / ') || '—'
+  }
+
+  function buildPathMap(): Map<number, string> {
+    const map = new Map<number, string>()
+    for (const loc of locations) {
+      map.set(loc.location_id, pathFor(loc.location_id))
+    }
+    return map
+  }
+
+  return { pathFor, buildPathMap }
 }

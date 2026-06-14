@@ -305,6 +305,39 @@ export const useLocationStoreExtended = () => {
     }
   }
 
+  // Fetch all locations as a flat list (no pagination) — used for path lookups
+  const fetchFlat = async (): Promise<import('../models').Location[]> => {
+    try {
+      const data = await fetchWrapper.get<{ results: import('../models').Location[] }>(
+        `${API_BASE}/locations?limit=2000`
+      )
+      return data.results
+    } catch (err) {
+      console.error('Error fetching flat locations:', err)
+      return []
+    }
+  }
+
+  // Fetch copies at a location, optionally including descendants
+  const fetchCopiesAtLocation = async (
+    locationId: number,
+    includeDescendants = false,
+    page = 1,
+    limit = 50
+  ) => {
+    try {
+      const desc = includeDescendants ? '&include_descendants=true' : ''
+
+      return await fetchWrapper.get<{
+        results: import('../models').Copy[]
+        count: { total: number }[]
+      }>(`${API_BASE}/copies?location_id=${locationId}${desc}&page=${page}&limit=${limit}`)
+    } catch (err) {
+      console.error('Error fetching copies at location:', err)
+      return { results: [], count: [{ total: 0 }] }
+    }
+  }
+
   return {
     ...baseStore,
     fetchCabinetContents,
@@ -315,7 +348,9 @@ export const useLocationStoreExtended = () => {
     fetchAllLinks,
     moveLocation,
     createLink,
-    deleteLink
+    deleteLink,
+    fetchFlat,
+    fetchCopiesAtLocation
   }
 }
 

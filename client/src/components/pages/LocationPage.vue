@@ -80,6 +80,11 @@
       @remove-link="onRemoveLink"
     />
 
+    <LocationCopiesModal
+      v-model="showCopiesModal"
+      :location="copiesLocation"
+    />
+
     <BulkLocationModal
       v-model="showBulkModal"
       :selected-copy-ids="[]"
@@ -92,7 +97,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { LocationTreeNode } from '@/components/common'
-import { LocationFormModal, LocationMoveModal, LocationLinkModal, BulkLocationModal } from '@/components/modals'
+import { LocationFormModal, LocationMoveModal, LocationLinkModal, LocationCopiesModal, BulkLocationModal } from '@/components/modals'
 import { useLocationStoreExtended } from '@/core'
 import { useToast } from '@/composables'
 import type { LocationTreeNode as TreeNode, LocationLink, Location } from '@/core'
@@ -112,12 +117,14 @@ const selectedId = ref<number | null>(null)
 const showFormModal = ref(false)
 const showMoveModal = ref(false)
 const showLinkModal = ref(false)
+const showCopiesModal = ref(false)
 const showBulkModal = ref(false)
 
 const editingLocation = ref<Location | null>(null)
 const addingChildParentId = ref<number | null>(null)
 const movingLocation = ref<TreeNode | null>(null)
 const linkingLocation = ref<TreeNode | null>(null)
+const copiesLocation = ref<TreeNode | null>(null)
 
 // ============================================================================
 // Computed
@@ -213,7 +220,8 @@ function openLink(node: TreeNode) {
 }
 
 function openViewCopies(node: TreeNode) {
-  toast.info(`Viewing copies for "${node.location_name || node.location_id}" — coming in Phase 4`)
+  copiesLocation.value = node
+  showCopiesModal.value = true
 }
 
 function openBulkModal() {

@@ -29,6 +29,33 @@ interface CountRow extends RowDataPacket {
 // GET /api/copies - List copies with filters
 router.get('/api/copies', async (req: Request, res: Response) => {
   try {
+    // location_path: walk up the hierarchy from the copy's location to build a breadcrumb string
+    const locationPathSubquery = `
+      (WITH RECURSIVE loc_path (location_id, parent_location_id, seg, depth) AS (
+        SELECT loc.location_id, loc.parent_location_id,
+               COALESCE(loc.location_name,
+                 CASE
+                   WHEN loc.cabinet_number IS NOT NULL AND loc.drawer_number IS NOT NULL AND loc.divider IS NOT NULL
+                     THEN CONCAT('Cabinet ', loc.cabinet_number, ' / Drawer ', loc.drawer_number, ' / ', loc.divider)
+                   WHEN loc.cabinet_number IS NOT NULL AND loc.drawer_number IS NOT NULL
+                     THEN CONCAT('Cabinet ', loc.cabinet_number, ' / Drawer ', loc.drawer_number)
+                   WHEN loc.cabinet_number IS NOT NULL
+                     THEN CONCAT('Cabinet ', loc.cabinet_number)
+                   ELSE loc.storage_type
+                 END
+               ) AS seg,
+               0 AS depth
+        FROM location loc WHERE loc.location_id = c.location_id
+        UNION ALL
+        SELECT l2.location_id, l2.parent_location_id,
+               COALESCE(l2.location_name, l2.storage_type),
+               lp.depth + 1
+        FROM location l2 INNER JOIN loc_path lp ON l2.location_id = lp.parent_location_id
+        WHERE l2.deleted_at IS NULL
+      )
+      SELECT GROUP_CONCAT(seg ORDER BY depth DESC SEPARATOR ' / ') FROM loc_path)
+    `;
+
     const baseQuery = `
       SELECT
         c.*,
@@ -40,10 +67,13 @@ router.get('/api/copies', async (req: Request, res: Response) => {
         l.location_name,
         l.storage_type,
         l.divider,
+        ${locationPathSubquery} as location_path,
         i.issue_number,
         i.issue_title,
         i.cover_date,
+        i.sort_order as issue_sort_order,
         s.title as series_title,
+        s.sort_title as series_sort_title,
         s.series_id,
         v.volume_number
       FROM copy c
@@ -60,6 +90,7 @@ router.get('/api/copies', async (req: Request, res: Response) => {
     const issueId = req.query.issue_id as string | undefined;
     const seriesId = req.query.series_id as string | undefined;
     const locationId = req.query.location_id as string | undefined;
+    const includeDescendants = req.query.include_descendants === 'true';
     const format = req.query.format as string | undefined;
 
     let queryString = baseQuery;
@@ -78,7 +109,22 @@ router.get('/api/copies', async (req: Request, res: Response) => {
         params.push(parseInt(seriesId));
       }
       if (locationId) {
-        queryString += ' AND c.location_id = ?';
+        if (includeDescendants) {
+          // Filter copies in the location and all its descendants
+          queryString += `
+            AND c.location_id IN (
+              WITH RECURSIVE loc_descendants AS (
+                SELECT location_id FROM location WHERE location_id = ? AND deleted_at IS NULL
+                UNION ALL
+                SELECT l2.location_id FROM location l2
+                INNER JOIN loc_descendants ld ON l2.parent_location_id = ld.location_id
+                WHERE l2.deleted_at IS NULL
+              )
+              SELECT location_id FROM loc_descendants
+            )`;
+        } else {
+          queryString += ' AND c.location_id = ?';
+        }
         params.push(parseInt(locationId));
       }
       if (format) {
@@ -87,20 +133,29 @@ router.get('/api/copies', async (req: Request, res: Response) => {
       }
     }
 
-    // Add pagination if no specific ID
+    // Copies within a location are sorted by filing order; all others by series/issue
+    const orderBy = locationId
+      ? 'COALESCE(s.sort_title, s.title), v.volume_number, i.sort_order, c.copy_id'
+      : 'COALESCE(s.sort_title, s.title), i.sort_order';
+
     if (!id) {
       const limit = parseInt(req.query.limit as string) || 25;
       const page = parseInt(req.query.page as string) || 1;
       const offset = (page - 1) * limit;
-      queryString += ` ORDER BY s.title, i.sort_order LIMIT ${limit} OFFSET ${offset}`;
+      queryString += ` ORDER BY ${orderBy} LIMIT ${limit} OFFSET ${offset}`;
     }
 
     const results = await query<CopyRow[]>(queryString, params);
-    
-    // Get total count
-    let countQuery = 'SELECT COUNT(*) as total FROM copy c JOIN issue i ON c.issue_id = i.issue_id WHERE c.deleted_at IS NULL';
+
+    // Count query — mirrors the filters above but without pagination or location_path
+    let countQuery = `
+      SELECT COUNT(*) as total
+      FROM copy c
+      JOIN issue i ON c.issue_id = i.issue_id
+      JOIN series s ON i.series_id = s.series_id
+      WHERE c.deleted_at IS NULL`;
     const countParams: (string | number)[] = [];
-    
+
     if (issueId) {
       countQuery += ' AND c.issue_id = ?';
       countParams.push(parseInt(issueId));
@@ -110,14 +165,28 @@ router.get('/api/copies', async (req: Request, res: Response) => {
       countParams.push(parseInt(seriesId));
     }
     if (locationId) {
-      countQuery += ' AND c.location_id = ?';
+      if (includeDescendants) {
+        countQuery += `
+          AND c.location_id IN (
+            WITH RECURSIVE loc_descendants AS (
+              SELECT location_id FROM location WHERE location_id = ? AND deleted_at IS NULL
+              UNION ALL
+              SELECT l2.location_id FROM location l2
+              INNER JOIN loc_descendants ld ON l2.parent_location_id = ld.location_id
+              WHERE l2.deleted_at IS NULL
+            )
+            SELECT location_id FROM loc_descendants
+          )`;
+      } else {
+        countQuery += ' AND c.location_id = ?';
+      }
       countParams.push(parseInt(locationId));
     }
     if (format) {
       countQuery += ' AND c.format = ?';
       countParams.push(format);
     }
-    
+
     const count = await query<CountRow[]>(countQuery, countParams);
 
     res.json({ results, count });

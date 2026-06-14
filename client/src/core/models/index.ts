@@ -290,10 +290,13 @@ export interface Copy extends AuditFields {
   location_name?: string
   storage_type?: string
   divider?: string
+  location_path?: string
   issue_number?: string
   issue_title?: string
+  issue_sort_order?: number
   cover_date?: string
   series_title?: string
+  series_sort_title?: string
   series_id?: number
   volume_number?: number
 }
