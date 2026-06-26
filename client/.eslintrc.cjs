@@ -1,6 +1,5 @@
 /* eslint-env node */
 module.exports = {
-  parser: '@babel/eslint-parser',
   root: true,
   extends: [
     'plugin:vue/vue3-essential',
@@ -9,6 +8,7 @@ module.exports = {
   ],
   parserOptions: {
     ecmaVersion: 'latest',
+    parser: '@babel/eslint-parser',
     requireConfigFile: false
   }
 }
