@@ -266,7 +266,7 @@ router.put('/api/series/:id', async (req: Request, res: Response) => {
        WHERE series_id = ? AND deleted_at IS NULL`,
       [
         title,
-        sort_title ?? null,
+        sort_title || null,
         issn ?? null,
         publisher_id ?? null,
         comic_age_id ?? null,
