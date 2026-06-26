@@ -86,7 +86,7 @@
                   type="checkbox"
                   class="form-check-input node-check"
                   :checked="isSeriesChecked(series)"
-                  :indeterminate="isSeriesIndeterminate(series)"
+                  v-indeterminate="isSeriesIndeterminate(series)"
                   @change.stop="toggleSeries(series)"
                   @click.stop
                 />
@@ -106,7 +106,7 @@
                       type="checkbox"
                       class="form-check-input node-check"
                       :checked="isVolumeChecked(volume)"
-                      :indeterminate="isVolumeIndeterminate(volume)"
+                      v-indeterminate="isVolumeIndeterminate(volume)"
                       @change.stop="toggleVolume(volume)"
                       @click.stop
                     />
@@ -129,7 +129,7 @@
                           type="checkbox"
                           class="form-check-input node-check"
                           :checked="isIssueChecked(issue)"
-                          :indeterminate="isIssueIndeterminate(issue)"
+                          v-indeterminate="isIssueIndeterminate(issue)"
                           @change.stop="toggleIssue(issue)"
                           @click.stop
                         />
@@ -172,7 +172,7 @@
         <div v-else-if="step === 3">
           <div class="alert alert-info mb-3">
             <font-awesome-icon :icon="['fas', 'info-circle']" class="me-2" />
-            <strong>{{ selectedCopyIds.size }}</strong> cop{{ selectedCopyIds.size === 1 ? 'y' : 'ies' }} will be assigned to
+            <strong>{{ totalSelected }}</strong> cop{{ totalSelected === 1 ? 'y' : 'ies' }} will be assigned to
             <strong>{{ selectedLocation ? locationLabel(selectedLocation) : '' }}</strong>.
           </div>
 
@@ -187,8 +187,8 @@
                 <span>{{ row.series_title }} #{{ row.issue_number }} <span class="text-muted">({{ row.format }})</span></span>
                 <span v-if="row.location_id" class="badge bg-secondary">currently: {{ row.divider || row.location_name }}</span>
               </div>
-              <div v-if="selectedCopyIds.size > confirmSample.length" class="text-center text-muted small py-1">
-                … and {{ selectedCopyIds.size - confirmSample.length }} more
+              <div v-if="totalSelected > confirmSample.length" class="text-center text-muted small py-1">
+                … and {{ totalSelected - confirmSample.length }} more
               </div>
             </div>
           </div>
@@ -296,6 +296,12 @@ interface SeriesNode extends SeriesSummary {
   volumes: VolumeNode[]
   loading: boolean
   loaded: boolean
+}
+
+// Custom directive: sets the indeterminate DOM property (not an HTML attribute)
+const vIndeterminate = {
+  mounted: (el: HTMLInputElement, binding: { value: boolean }) => { el.indeterminate = binding.value },
+  updated: (el: HTMLInputElement, binding: { value: boolean }) => { el.indeterminate = binding.value },
 }
 
 // ============================================================================
@@ -562,7 +568,11 @@ async function loadTree() {
   expandedSeries.value.clear()
   try {
     const res = await fetch(`/api/copy-tree?include_assigned=${showAssigned.value}`)
-    if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`)
+    if (!res.ok) {
+      console.error(`copy-tree ${res.status}`)
+      toast.error('Failed to load series list')
+      return
+    }
     const data = await res.json()
     tree.value = (data.series ?? []).map((s: SeriesSummary) => ({
       ...s,
@@ -582,7 +592,11 @@ async function loadSeriesDetail(series: SeriesNode) {
   series.loading = true
   try {
     const res = await fetch(`/api/copy-tree/${series.series_id}?include_assigned=${showAssigned.value}`)
-    if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`)
+    if (!res.ok) {
+      console.error(`copy-tree/${series.series_id} ${res.status}`)
+      toast.error('Failed to load series detail')
+      return
+    }
     const data = await res.json()
     series.volumes = data.volumes ?? []
     series.loaded = true
@@ -632,7 +646,10 @@ async function handleAssign() {
         updates: { location_id: selectedLocationId.value },
       }),
     })
-    if (!res.ok) throw new Error('Bulk assign failed')
+    if (!res.ok) {
+      toast.error('Failed to assign copies')
+      return
+    }
     const result = await res.json()
     toast.success(`Assigned ${result.updated_count} copies`)
     emit('assigned', result.updated_count)
