@@ -28,3 +28,4 @@ client/public/images/logos/uploads
 
 scripts/
 .env
+.claude/

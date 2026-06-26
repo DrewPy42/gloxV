@@ -280,8 +280,9 @@ async function confirmDelete(node: TreeNode) {
   }
 }
 
-function handleBulkAssigned(count: number) {
+async function handleBulkAssigned(count: number) {
   toast.success(`Successfully assigned ${count} copies`)
+  await loadAll()
 }
 
 // ============================================================================

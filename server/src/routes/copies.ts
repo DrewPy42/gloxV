@@ -108,7 +108,9 @@ router.get('/api/copies', async (req: Request, res: Response) => {
         queryString += ' AND i.series_id = ?';
         params.push(parseInt(seriesId));
       }
-      if (locationId) {
+      if (locationId === 'unassigned') {
+        queryString += ' AND c.location_id IS NULL';
+      } else if (locationId) {
         if (includeDescendants) {
           // Filter copies in the location and all its descendants
           queryString += `
@@ -164,7 +166,9 @@ router.get('/api/copies', async (req: Request, res: Response) => {
       countQuery += ' AND i.series_id = ?';
       countParams.push(parseInt(seriesId));
     }
-    if (locationId) {
+    if (locationId === 'unassigned') {
+      countQuery += ' AND c.location_id IS NULL';
+    } else if (locationId) {
       if (includeDescendants) {
         countQuery += `
           AND c.location_id IN (

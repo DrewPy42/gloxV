@@ -154,6 +154,7 @@ const assignmentType = ref<'unassigned' | 'selected'>('unassigned')
 const selectedLocationId = ref<number | null>(null)
 const assigning = ref(false)
 const sampleCopies = ref<Copy[]>([])
+const unassignedTotal = ref(0)
 
 // Computed
 const title = computed(() => 
@@ -166,14 +167,16 @@ const selectedLocation = computed(() =>
   locationStore.records.find(l => l.location_id === selectedLocationId.value)
 )
 
-const locationOptions = computed(() => 
-  locationStore.records.map(location => ({
-    value: location.location_id,
-    label: formatLocationLabel(location)
-  }))
+const locationOptions = computed(() =>
+  locationStore.records
+    .filter(location => location.storage_type !== 'divider')
+    .map(location => ({
+      value: location.location_id,
+      label: formatLocationLabel(location)
+    }))
 )
 
-const unassignedCount = computed(() => copyStore.totalRecords || 0)
+const unassignedCount = computed(() => unassignedTotal.value)
 
 const totalCount = computed(() => 
   assignmentType.value === 'unassigned' ? unassignedCount.value : props.selectedCopyIds.length
@@ -200,21 +203,15 @@ const loadSampleCopies = async () => {
 
   try {
     if (assignmentType.value === 'unassigned') {
-      // Load sample unassigned copies
-      await copyStore.fetchRecords({ 
+      await copyStore.fetchRecords({
         limit: 5,
-        filters: { location_id: 'null' }
+        filters: { location_id: 'unassigned' }
       })
       sampleCopies.value = copyStore.records
     } else {
-      // Load sample selected copies
-      if (props.selectedCopyIds.length > 0) {
-        const sampleIds = props.selectedCopyIds.slice(0, 5)
-        // We'd need to add a method to fetch copies by IDs
-        // For now, we'll load unassigned as a fallback
-        await copyStore.fetchRecords({ limit: 5 })
-        sampleCopies.value = copyStore.records.filter(c => sampleIds.includes(c.copy_id))
-      }
+      sampleCopies.value = copyStore.records.filter(c =>
+        props.selectedCopyIds.includes(c.copy_id)
+      ).slice(0, 5)
     }
   } catch (error) {
     console.error('Error loading sample copies:', error)
@@ -268,10 +265,10 @@ const handleAssign = async () => {
 
 const handleClose = () => {
   isOpen.value = false
-  // Reset form
   assignmentType.value = 'unassigned'
   selectedLocationId.value = null
   sampleCopies.value = []
+  unassignedTotal.value = 0
 }
 
 // Watchers
@@ -289,13 +286,13 @@ watch(assignmentType, () => {
 watch(isOpen, async (open) => {
   if (open) {
     await locationStore.fetchRecords()
-    
+
     // Load unassigned count
-    if (assignmentType.value === 'unassigned') {
-      await copyStore.fetchRecords({ 
-        filters: { location_id: 'null' }
-      })
-    }
+    await copyStore.fetchRecords({
+      limit: 1,
+      filters: { location_id: 'unassigned' }
+    })
+    unassignedTotal.value = copyStore.totalRecords
   }
 })
 </script>
