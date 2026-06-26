@@ -87,6 +87,7 @@
 
     <BulkLocationModal
       v-model="showBulkModal"
+      :preset-location-id="selectedId"
       @assigned="handleBulkAssigned"
     />
   </div>

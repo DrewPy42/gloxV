@@ -200,7 +200,7 @@
     <template #footer>
       <button type="button" class="btn btn-secondary" @click="handleClose">Cancel</button>
 
-      <button v-if="step > 1" type="button" class="btn btn-outline-secondary" @click="step--">
+      <button v-if="step > 1 && !(step === 2 && props.presetLocationId)" type="button" class="btn btn-outline-secondary" @click="step--">
         <font-awesome-icon :icon="['fas', 'arrow-left']" class="me-1" />
         Back
       </button>
@@ -304,9 +304,12 @@ interface SeriesNode extends SeriesSummary {
 
 interface Props {
   modelValue: boolean
+  presetLocationId?: number | null
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  presetLocationId: null
+})
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
@@ -666,6 +669,10 @@ function handleClose() {
 watch(isOpen, async (open) => {
   if (open) {
     await locationStore.fetchRecords({ limit: 1000 })
+    if (props.presetLocationId) {
+      selectedLocationId.value = props.presetLocationId
+      await goToStep2()
+    }
   }
 })
 </script>
