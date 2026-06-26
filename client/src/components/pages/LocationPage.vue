@@ -41,6 +41,7 @@
           :selected-id="selectedId"
           @add-child="openAddChild"
           @view-copies="openViewCopies"
+          @bulk-assign="openBulkFromNode"
           @move="openMove"
           @set-link="openLink"
           @edit="openEdit"
@@ -87,7 +88,7 @@
 
     <BulkLocationModal
       v-model="showBulkModal"
-      :preset-location-id="selectedId"
+      :preset-location-id="bulkPresetLocationId"
       @assigned="handleBulkAssigned"
     />
   </div>
@@ -119,6 +120,7 @@ const showMoveModal = ref(false)
 const showLinkModal = ref(false)
 const showCopiesModal = ref(false)
 const showBulkModal = ref(false)
+const bulkPresetLocationId = ref<number | null>(null)
 
 const editingLocation = ref<Location | null>(null)
 const addingChildParent = ref<TreeNode | null>(null)
@@ -220,6 +222,12 @@ function openViewCopies(node: TreeNode) {
 }
 
 function openBulkModal() {
+  bulkPresetLocationId.value = null
+  showBulkModal.value = true
+}
+
+function openBulkFromNode(node: TreeNode) {
+  bulkPresetLocationId.value = node.location_id
   showBulkModal.value = true
 }
 

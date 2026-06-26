@@ -55,6 +55,9 @@
         <button class="btn btn-xs btn-outline-secondary me-1" title="View copies" @click="$emit('view-copies', node)">
           <font-awesome-icon :icon="['fas', 'eye']" />
         </button>
+        <button class="btn btn-xs btn-outline-secondary me-1" title="Bulk assign copies here" @click="$emit('bulk-assign', node)">
+          <font-awesome-icon :icon="['fas', 'layer-group']" />
+        </button>
         <button class="btn btn-xs btn-outline-secondary me-1" title="Move location" @click="$emit('move', node)">
           <font-awesome-icon :icon="['fas', 'arrows-up-down-left-right']" />
         </button>
@@ -82,6 +85,7 @@
           :selected-id="selectedId"
           @add-child="$emit('add-child', $event)"
           @view-copies="$emit('view-copies', $event)"
+          @bulk-assign="$emit('bulk-assign', $event)"
           @move="$emit('move', $event)"
           @set-link="$emit('set-link', $event)"
           @edit="$emit('edit', $event)"
@@ -120,6 +124,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (e: 'add-child', node: TreeNode): void
   (e: 'view-copies', node: TreeNode): void
+  (e: 'bulk-assign', node: TreeNode): void
   (e: 'move', node: TreeNode): void
   (e: 'set-link', node: TreeNode): void
   (e: 'edit', node: TreeNode): void
