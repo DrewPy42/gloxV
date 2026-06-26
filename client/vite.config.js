@@ -45,7 +45,7 @@ export default defineConfig({
          * @type {string}
          * Target URL for the proxy.
          */
-        target: 'http://localhost:3000/api',
+        target: 'http://localhost:3000',
         /**
          * @type {boolean}
          * Whether to change the origin of the host header to the target URL.

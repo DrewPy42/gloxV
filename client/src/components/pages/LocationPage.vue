@@ -87,7 +87,6 @@
 
     <BulkLocationModal
       v-model="showBulkModal"
-      :selected-copy-ids="[]"
       @assigned="handleBulkAssigned"
     />
   </div>
