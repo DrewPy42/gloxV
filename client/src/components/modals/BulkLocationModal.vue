@@ -392,12 +392,13 @@ const confirmSample = computed(() => {
 // ============================================================================
 
 function locationLabel(l: Location) {
+  const leaf = l.divider || l.location_name || l.storage_type
+  if (l.location_path) return `${l.location_path} / ${leaf}`
   const parts: string[] = []
   if (l.cabinet_number) parts.push(`Cabinet ${l.cabinet_number}`)
   if (l.drawer_number) parts.push(`Drawer ${l.drawer_number}`)
-  if (l.divider) parts.push(l.divider)
-  if (l.location_name && l.location_name !== l.divider) parts.push(`(${l.location_name})`)
-  return parts.join(' / ') || l.storage_type
+  parts.push(leaf)
+  return parts.join(' / ')
 }
 
 function volumeKey(v: VolumeNode) {

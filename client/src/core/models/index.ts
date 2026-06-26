@@ -115,6 +115,7 @@ export interface Location extends AuditFields {
   file_path?: string
   backup_path?: string
   notes?: string
+  location_path?: string
   is_insured_separately: boolean
   // Computed
   series_count?: number

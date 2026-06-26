@@ -93,7 +93,20 @@ router.get('/api/locations', async (req: Request, res: Response) => {
         l.updated_at,
         COUNT(DISTINCT s.series_id) as series_count,
         (SELECT COUNT(*) FROM copy c WHERE c.location_id = l.location_id AND c.deleted_at IS NULL) as copy_count,
-        (SELECT COALESCE(SUM(c2.current_value), 0) FROM copy c2 WHERE c2.location_id = l.location_id AND c2.deleted_at IS NULL) as total_value
+        (SELECT COALESCE(SUM(c2.current_value), 0) FROM copy c2 WHERE c2.location_id = l.location_id AND c2.deleted_at IS NULL) as total_value,
+        (WITH RECURSIVE ancestors AS (
+          SELECT location_id, parent_location_id,
+                 COALESCE(divider, location_name, storage_type) AS seg
+          FROM location WHERE location_id = l.parent_location_id AND deleted_at IS NULL
+          UNION ALL
+          SELECT p.location_id, p.parent_location_id,
+                 COALESCE(p.divider, p.location_name, p.storage_type) AS seg
+          FROM location p
+          INNER JOIN ancestors a ON p.location_id = a.parent_location_id
+          WHERE p.deleted_at IS NULL
+        )
+        SELECT GROUP_CONCAT(seg ORDER BY location_id SEPARATOR ' / ') FROM ancestors
+        ) AS location_path
       FROM location l
       LEFT JOIN series s ON l.location_id = s.default_location_id AND s.deleted_at IS NULL
       WHERE l.deleted_at IS NULL
