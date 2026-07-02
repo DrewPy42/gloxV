@@ -7,10 +7,11 @@ const router = (0, express_1.Router)();
 router.get('/api/volumes', async (req, res) => {
     try {
         const baseQuery = `
-      SELECT 
+      SELECT
         v.volume_id,
         v.series_id,
         v.volume_number,
+        v.issue_range,
         v.start_issue,
         v.end_issue,
         v.start_date,
@@ -98,21 +99,78 @@ router.get('/api/volumes/:id/summary', async (req, res) => {
         res.status(500).json({ error: 'Database error occurred' });
     }
 });
+// Helper function to parse issue_range and compute start_issue/end_issue
+function parseIssueRange(issueRange) {
+    if (!issueRange)
+        return { start: null, end: null };
+    const segments = issueRange.split(',').map(s => s.trim());
+    let minIssue = null;
+    let maxIssue = null;
+    let isOpenEnded = false;
+    for (const segment of segments) {
+        if (segment.endsWith('+')) {
+            // Open-ended range like "500+"
+            const num = parseInt(segment.slice(0, -1), 10);
+            if (!isNaN(num)) {
+                if (minIssue === null || num < minIssue)
+                    minIssue = num;
+                isOpenEnded = true;
+            }
+        }
+        else if (segment.includes('-')) {
+            // Range like "1-416"
+            const [startStr, endStr] = segment.split('-').map(s => s.trim());
+            const start = parseInt(startStr, 10);
+            const end = parseInt(endStr, 10);
+            if (!isNaN(start)) {
+                if (minIssue === null || start < minIssue)
+                    minIssue = start;
+            }
+            if (!isNaN(end)) {
+                if (maxIssue === null || end > maxIssue)
+                    maxIssue = end;
+            }
+        }
+        else {
+            // Single issue like "7"
+            const num = parseInt(segment, 10);
+            if (!isNaN(num)) {
+                if (minIssue === null || num < minIssue)
+                    minIssue = num;
+                if (maxIssue === null || num > maxIssue)
+                    maxIssue = num;
+            }
+        }
+    }
+    return {
+        start: minIssue,
+        end: isOpenEnded ? null : maxIssue
+    };
+}
 // POST /api/volumes - Create a new volume
 router.post('/api/volumes', async (req, res) => {
     try {
-        const { series_id, volume_number, start_issue, end_issue, start_date, end_date, notes } = req.body;
+        const { series_id, volume_number, issue_range, start_issue, end_issue, start_date, end_date, notes } = req.body;
         if (!series_id || volume_number === undefined) {
             res.status(400).json({ error: 'series_id and volume_number are required' });
             return;
         }
-        const result = await (0, db_1.execute)(`INSERT INTO volume (series_id, volume_number, start_issue, end_issue, 
+        // If issue_range is provided, compute start_issue/end_issue from it
+        let computedStart = start_issue;
+        let computedEnd = end_issue;
+        if (issue_range) {
+            const parsed = parseIssueRange(issue_range);
+            computedStart = parsed.start;
+            computedEnd = parsed.end;
+        }
+        const result = await (0, db_1.execute)(`INSERT INTO volume (series_id, volume_number, issue_range, start_issue, end_issue,
         start_date, end_date, notes)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`, [
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, [
             series_id,
             volume_number,
-            start_issue || null,
-            end_issue || null,
+            issue_range || null,
+            computedStart || null,
+            computedEnd || null,
             start_date || null,
             end_date || null,
             notes || null
@@ -131,9 +189,18 @@ router.post('/api/volumes', async (req, res) => {
 router.put('/api/volumes/:id', async (req, res) => {
     try {
         const id = parseInt(req.params.id);
-        const { volume_number, start_issue, end_issue, start_date, end_date, notes } = req.body;
-        const result = await (0, db_1.execute)(`UPDATE volume SET 
+        const { volume_number, issue_range, start_issue, end_issue, start_date, end_date, notes } = req.body;
+        // If issue_range is provided, compute start_issue/end_issue from it
+        let computedStart = start_issue;
+        let computedEnd = end_issue;
+        if (issue_range !== undefined) {
+            const parsed = parseIssueRange(issue_range);
+            computedStart = parsed.start;
+            computedEnd = parsed.end;
+        }
+        const result = await (0, db_1.execute)(`UPDATE volume SET
         volume_number = COALESCE(?, volume_number),
+        issue_range = ?,
         start_issue = ?,
         end_issue = ?,
         start_date = ?,
@@ -141,8 +208,9 @@ router.put('/api/volumes/:id', async (req, res) => {
         notes = ?
        WHERE volume_id = ? AND deleted_at IS NULL`, [
             volume_number,
-            start_issue ?? null,
-            end_issue ?? null,
+            issue_range ?? null,
+            computedStart ?? null,
+            computedEnd ?? null,
             start_date ?? null,
             end_date ?? null,
             notes ?? null,

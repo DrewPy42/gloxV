@@ -45,9 +45,10 @@ export interface PersonAlias {
     alias_type: 'pen_name' | 'maiden_name' | 'nickname' | 'alternate_spelling' | 'other';
     notes: string | null;
 }
-export type StorageType = 'cabinet' | 'display' | 'bookshelf' | 'digital';
+export type StorageType = 'cabinet' | 'drawer' | 'divider' | 'bookshelf' | 'shelf' | 'display' | 'box' | 'folder' | 'digital';
 export interface Location extends AuditFields {
     location_id: number;
+    parent_location_id: number | null;
     storage_type: StorageType;
     location_name: string | null;
     cabinet_number: number | null;
@@ -59,6 +60,13 @@ export interface Location extends AuditFields {
     backup_path: string | null;
     notes: string | null;
     is_insured_separately: boolean;
+}
+export interface LocationLink {
+    location_link_id: number;
+    from_location_id: number;
+    to_location_id: number;
+    notes: string | null;
+    created_at: Date;
 }
 export interface Series extends AuditFields {
     series_id: number;
@@ -84,6 +92,7 @@ export interface Volume extends AuditFields {
     volume_id: number;
     series_id: number;
     volume_number: number;
+    issue_range: string | null;
     start_issue: number | null;
     end_issue: number | null;
     start_date: Date | null;
@@ -146,7 +155,7 @@ export interface CollectedEdition extends AuditFields {
     release_date: Date | null;
     cover_image_path: string | null;
     condition_id: number | null;
-    cover_price: number | null;
+    purchase_price: number | null;
     current_value: number | null;
     value_date: Date | null;
     purchase_date: Date | null;

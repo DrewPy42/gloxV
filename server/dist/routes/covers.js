@@ -7,8 +7,9 @@ const router = (0, express_1.Router)();
 router.get('/api/covers', async (req, res) => {
     try {
         const baseQuery = `
-      SELECT 
+      SELECT
         cv.*,
+        cp.issue_id,
         i.issue_number,
         i.issue_title,
         s.title as series_title,
@@ -16,13 +17,14 @@ router.get('/api/covers', async (req, res) => {
         p.first_name as artist_first_name,
         p.last_name as artist_last_name
       FROM cover cv
-      JOIN issue i ON cv.issue_id = i.issue_id
-      JOIN series s ON i.series_id = s.series_id
+      LEFT JOIN copy cp ON cv.copy_id = cp.copy_id
+      LEFT JOIN issue i ON cp.issue_id = i.issue_id
+      LEFT JOIN series s ON i.series_id = s.series_id
       LEFT JOIN person p ON cv.cover_artist_person_id = p.person_id
       WHERE cv.deleted_at IS NULL
     `;
         const id = req.query.id;
-        const issueId = req.query.issue_id;
+        const copyId = req.query.copy_id;
         const coverType = req.query.cover_type;
         let queryString = baseQuery;
         const params = [];
@@ -31,9 +33,9 @@ router.get('/api/covers', async (req, res) => {
             params.push(parseInt(id));
         }
         else {
-            if (issueId) {
-                queryString += ' AND cv.issue_id = ?';
-                params.push(parseInt(issueId));
+            if (copyId) {
+                queryString += ' AND cv.copy_id = ?';
+                params.push(parseInt(copyId));
             }
             if (coverType) {
                 queryString += ' AND cv.cover_type = ?';
@@ -41,7 +43,7 @@ router.get('/api/covers', async (req, res) => {
             }
         }
         queryString += ' ORDER BY s.title, i.sort_order, cv.is_primary DESC';
-        if (!id && !issueId) {
+        if (!id && !copyId) {
             const limit = parseInt(req.query.limit) || 25;
             const page = parseInt(req.query.page) || 1;
             const offset = (page - 1) * limit;
@@ -60,8 +62,9 @@ router.get('/api/covers', async (req, res) => {
 router.get('/api/covers/:id', async (req, res) => {
     try {
         const id = parseInt(req.params.id);
-        const results = await (0, db_1.query)(`SELECT 
+        const results = await (0, db_1.query)(`SELECT
         cv.*,
+        cp.issue_id,
         i.issue_number,
         i.issue_title,
         i.cover_date,
@@ -70,8 +73,9 @@ router.get('/api/covers/:id', async (req, res) => {
         p.first_name as artist_first_name,
         p.last_name as artist_last_name
        FROM cover cv
-       JOIN issue i ON cv.issue_id = i.issue_id
-       JOIN series s ON i.series_id = s.series_id
+       LEFT JOIN copy cp ON cv.copy_id = cp.copy_id
+       LEFT JOIN issue i ON cp.issue_id = i.issue_id
+       LEFT JOIN series s ON i.series_id = s.series_id
        LEFT JOIN person p ON cv.cover_artist_person_id = p.person_id
        WHERE cv.cover_id = ? AND cv.deleted_at IS NULL`, [id]);
         if (results.length === 0) {
@@ -88,19 +92,19 @@ router.get('/api/covers/:id', async (req, res) => {
 // POST /api/covers - Create a new cover
 router.post('/api/covers', async (req, res) => {
     try {
-        const { issue_id, cover_type, cover_description, cover_artist_person_id, cover_image_path, is_primary, notes } = req.body;
-        if (!issue_id) {
-            res.status(400).json({ error: 'issue_id is required' });
+        const { copy_id, cover_type, cover_description, cover_artist_person_id, cover_image_path, is_primary, notes } = req.body;
+        if (!copy_id) {
+            res.status(400).json({ error: 'copy_id is required' });
             return;
         }
-        // If setting as primary, unset other primaries for this issue
+        // If setting as primary, unset other primaries for this copy
         if (is_primary) {
-            await (0, db_1.execute)('UPDATE cover SET is_primary = 0 WHERE issue_id = ?', [issue_id]);
+            await (0, db_1.execute)('UPDATE cover SET is_primary = 0 WHERE copy_id = ?', [copy_id]);
         }
-        const result = await (0, db_1.execute)(`INSERT INTO cover (issue_id, cover_type, cover_description, 
+        const result = await (0, db_1.execute)(`INSERT INTO cover (copy_id, cover_type, cover_description,
         cover_artist_person_id, cover_image_path, is_primary, notes)
        VALUES (?, ?, ?, ?, ?, ?, ?)`, [
-            issue_id,
+            copy_id,
             cover_type || 'standard',
             cover_description || null,
             cover_artist_person_id || null,

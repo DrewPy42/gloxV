@@ -44,7 +44,7 @@ function extractNumeric(issueNumber) {
 router.get('/api/issues', async (req, res) => {
     try {
         const baseQuery = `
-      SELECT 
+      SELECT
         i.issue_id,
         i.series_id,
         i.volume_id,
@@ -61,10 +61,33 @@ router.get('/api/issues', async (req, res) => {
         i.created_at,
         i.updated_at,
         s.title as series_title,
-        v.volume_number
+        v.volume_number,
+        COALESCE(copy_stats.copy_count, 0) as copy_count,
+        COALESCE(copy_stats.total_cost, 0) as total_cost,
+        COALESCE(copy_stats.total_value, 0) as total_value,
+        COALESCE(cover_stats.cover_count, 0) as cover_count,
+        cover_stats.cover_images
       FROM issue i
       JOIN series s ON i.series_id = s.series_id
       LEFT JOIN volume v ON i.volume_id = v.volume_id
+      LEFT JOIN (
+        SELECT issue_id,
+               COUNT(*) as copy_count,
+               SUM(cover_price) as total_cost,
+               SUM(current_value) as total_value
+        FROM copy
+        WHERE deleted_at IS NULL
+        GROUP BY issue_id
+      ) copy_stats ON i.issue_id = copy_stats.issue_id
+      LEFT JOIN (
+        SELECT cp.issue_id,
+               COUNT(DISTINCT cv.cover_id) as cover_count,
+               GROUP_CONCAT(DISTINCT cv.cover_image_path ORDER BY cv.is_primary DESC, cv.cover_id SEPARATOR ',') as cover_images
+        FROM copy cp
+        JOIN cover cv ON cp.copy_id = cv.copy_id
+        WHERE cp.deleted_at IS NULL AND cv.deleted_at IS NULL AND cv.cover_image_path IS NOT NULL
+        GROUP BY cp.issue_id
+      ) cover_stats ON i.issue_id = cover_stats.issue_id
       WHERE i.deleted_at IS NULL
     `;
         const id = req.query.id;
@@ -112,7 +135,7 @@ router.get('/api/issues/:id', async (req, res) => {
       FROM issue i
       JOIN series s ON i.series_id = s.series_id
       LEFT JOIN volume v ON i.volume_id = v.volume_id
-      LEFT JOIN publisher p ON s.publisher_id = p.publisher_id
+      LEFT JOIN publisher p ON s.publisher_id = p.publisher_id,
       WHERE i.issue_id = ? AND i.deleted_at IS NULL
     `;
         const results = await (0, db_1.query)(issueQuery, [id]);
@@ -138,7 +161,7 @@ router.get('/api/issues/:id/copies', async (req, res) => {
         cv.cover_type,
         cv.cover_description,
         l.location_name,
-        l.storage_type
+        l.storage_type,
       FROM copy c
       LEFT JOIN condition_code cc ON c.condition_id = cc.condition_id
       LEFT JOIN cover cv ON c.cover_id = cv.cover_id

@@ -3,6 +3,10 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      SERVER_URL: ${SERVER_URL}
+      SERVER_PORT: ${SERVER_PORT}
     ports:
       - "5200:5173"
     volumes:
