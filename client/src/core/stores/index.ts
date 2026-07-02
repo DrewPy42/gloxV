@@ -17,11 +17,9 @@ import type {
   Tag,
   Volume
 } from '@/core'
-import { fetchWrapper } from '@/core'
+import { API_BASE, fetchWrapper } from '@/core'
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-
-const API_BASE = 'http://localhost:3000/api'
 
 // ============================================================================
 // Series Store

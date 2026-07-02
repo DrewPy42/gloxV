@@ -248,7 +248,7 @@
 import { ref, computed, watch } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { Modal, FormField } from '@/components/common'
-import { useLocationStore } from '@/core'
+import { API_BASE, fetchWrapper, useLocationStore } from '@/core'
 import { useToast } from '@/composables'
 import type { Location } from '@/core'
 
@@ -567,13 +567,9 @@ async function loadTree() {
   treeLoading.value = true
   expandedSeries.value.clear()
   try {
-    const res = await fetch(`/api/copy-tree?include_assigned=${showAssigned.value}`)
-    if (!res.ok) {
-      console.error(`copy-tree ${res.status}`)
-      toast.error('Failed to load series list')
-      return
-    }
-    const data = await res.json()
+    const data = await fetchWrapper.get<{ series: SeriesSummary[] }>(
+      `${API_BASE}/copy-tree?include_assigned=${showAssigned.value}`
+    )
     tree.value = (data.series ?? []).map((s: SeriesSummary) => ({
       ...s,
       volumes: [],
@@ -591,13 +587,9 @@ async function loadTree() {
 async function loadSeriesDetail(series: SeriesNode) {
   series.loading = true
   try {
-    const res = await fetch(`/api/copy-tree/${series.series_id}?include_assigned=${showAssigned.value}`)
-    if (!res.ok) {
-      console.error(`copy-tree/${series.series_id} ${res.status}`)
-      toast.error('Failed to load series detail')
-      return
-    }
-    const data = await res.json()
+    const data = await fetchWrapper.get<{ volumes: VolumeNode[] }>(
+      `${API_BASE}/copy-tree/${series.series_id}?include_assigned=${showAssigned.value}`
+    )
     series.volumes = data.volumes ?? []
     series.loaded = true
 
@@ -638,19 +630,10 @@ async function handleAssign() {
     const pending = tree.value.filter(s => seriesFullySelected.value.has(s.series_id) && !s.loaded)
     await Promise.all(pending.map(s => loadSeriesDetail(s)))
 
-    const res = await fetch('/api/copies/bulk', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        copy_ids: Array.from(selectedCopyIds.value),
-        updates: { location_id: selectedLocationId.value },
-      }),
+    const result = await fetchWrapper.put<{ updated_count: number }>(`${API_BASE}/copies/bulk`, {
+      copy_ids: Array.from(selectedCopyIds.value),
+      updates: { location_id: selectedLocationId.value },
     })
-    if (!res.ok) {
-      toast.error('Failed to assign copies')
-      return
-    }
-    const result = await res.json()
     toast.success(`Assigned ${result.updated_count} copies`)
     emit('assigned', result.updated_count)
     handleClose()

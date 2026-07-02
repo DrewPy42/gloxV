@@ -4,7 +4,7 @@ services:
       context: ./client
       dockerfile: Dockerfile
     ports:
-      - "5173:5173"
+      - "5200:5173"
     volumes:
       - ./client:/app
       - /app/node_modules  # Do not share node_modules between host and container
@@ -23,7 +23,7 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       CHOKIDAR_USEPOLLING: "true"  # Enable polling for file changes inside Docker
     ports:
-      - "3000:3000"
+      - "${SERVER_PORT}:3000"
     volumes:
       - ./server:/app
       - /app/node_modules  # Do not share node_modules between host and container
