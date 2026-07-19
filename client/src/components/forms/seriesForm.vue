@@ -5,11 +5,7 @@
       <div class="col-md-8">
         <Card title="Series Details">
           <template #header-actions>
-            <button
-              class="btn btn-sm btn-primary"
-              @click="editSeries"
-              v-if="!isEditing"
-            >
+            <button class="btn btn-sm btn-primary" @click="editSeries" v-if="!isEditing">
               <font-awesome-icon :icon="['fas', 'pen']" /> Edit
             </button>
           </template>
@@ -139,12 +135,13 @@
                     :alt="`Cover ${index + 1}`"
                     class="issue-cover-thumb"
                     :style="{ zIndex: 10 - index }"
+                    @click="openCoverViewer(record)"
                   />
                   <span
-                    v-if="record.cover_count > getCoverPaths(record.cover_images).length"
+                    v-if="getUniqueCoverCount(record.cover_images) > getCoverPaths(record.cover_images).length"
                     class="cover-more-badge"
                   >
-                    +{{ record.cover_count - getCoverPaths(record.cover_images).length }}
+                    +{{ getUniqueCoverCount(record.cover_images) - getCoverPaths(record.cover_images).length }}
                   </span>
                 </template>
                 <img
@@ -268,6 +265,12 @@
     >
       <p>{{ confirmation.confirmMessage.value }}</p>
     </Modal>
+    <!-- Cover Gallery Modal -->
+    <IssueCoverGalleryModal
+      v-model="showCoverViewer"
+      :covers="selectedIssueCovers"
+      :issue-title="selectedIssueTitle"
+    />
   </div>
 </template>
 
@@ -285,8 +288,7 @@ import {
 } from '@/core'
 import { useImage, useConfirmation } from '@/composables'
 import { format } from 'date-fns'
-import VolumeModal from '@/components/modals/VolumeModal.vue'
-import IssueModal from '@/components/modals/IssueModal.vue'
+import { IssueCoverGalleryModal, IssueModal, VolumeModal } from '@/components/modals'
 
 // ============================================================================
 // Props & Emits
@@ -484,10 +486,28 @@ const deleteIssue = async (issue: Issue) => {
 
 const getCoverPaths = (coverImagesString: string): string[] => {
   if (!coverImagesString) return []
-  // Split comma-separated string and limit to first 4
-  return coverImagesString.split(',').slice(0, 4)
+  const unique = [...new Set(coverImagesString.split(',').filter(Boolean))]
+  return unique.slice(0, 4)
 }
 
+const getUniqueCoverCount = (coverImagesString: string): number => {
+  if (!coverImagesString) return 0
+  return new Set(coverImagesString.split(',').filter(Boolean)).size
+}
+
+const showCoverViewer = ref(false)
+const selectedIssueCovers = ref<string[]>([])
+const selectedIssueTitle = ref('')
+
+const openCoverViewer = (issue: Issue) => {
+  selectedIssueCovers.value = issue.cover_images
+    ? [...new Set(issue.cover_images.split(',').filter(Boolean))]
+    : []
+  selectedIssueTitle.value = issue.issue_title
+    ? `#${issue.issue_number} – ${issue.issue_title}`
+    : `Issue #${issue.issue_number}`
+  showCoverViewer.value = true
+}
 function editSeries() {
   emit('edit')
 }
