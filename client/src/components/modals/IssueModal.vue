@@ -5,10 +5,18 @@
     :loading="loading"
     :confirm-disabled="!isValid"
     :confirm-text="isEditing ? 'Save' : 'Add'"
+    :show-confirm-button="!isViewOnly"
+    :show-cancel-button="!isViewOnly"
     size="lg"
     @confirm="handleSubmit"
     @close="handleClose"
   >
+    <template v-if="isViewOnly" #footer>
+      <button type="button" class="btn btn-secondary" @click="handleClose">Close</button>
+      <button type="button" class="btn btn-primary" @click="isViewOnly = false">
+        <font-awesome-icon :icon="['fas', 'pen']" /> Edit
+      </button>
+    </template>
     <div class="issue-form">
       <div class="row">
         <div class="col-md-4">
@@ -18,6 +26,7 @@
             :required="true"
             :error-message="errors.issue_number"
             help-text="e.g., 1, 1A, 1/2, Annual 1"
+            :disabled="isViewOnly"
           />
         </div>
         <div class="col-md-8">
@@ -25,6 +34,7 @@
             v-model="formData.issue_title"
             label="Issue Title"
             placeholder="Story title"
+            :disabled="isViewOnly"
           />
         </div>
       </div>
@@ -35,6 +45,7 @@
             v-model="formData.title_variant"
             label="Title Variant"
             help-text="For newsstand, direct edition, etc."
+            :disabled="isViewOnly"
           />
         </div>
         <div class="col-md-3">
@@ -45,6 +56,7 @@
             :min="0"
             :step="0.01"
             placeholder="0.00"
+            :disabled="isViewOnly"
           />
         </div>
         <div class="col-md-3">
@@ -53,6 +65,7 @@
             type="number"
             label="Page Count"
             :min="1"
+            :disabled="isViewOnly"
           />
         </div>
       </div>
@@ -64,6 +77,7 @@
             type="date"
             label="Cover Date"
             help-text="Date shown on cover"
+            :disabled="isViewOnly"
           />
         </div>
         <div class="col-md-6">
@@ -72,6 +86,7 @@
             type="date"
             label="Release Date"
             help-text="Actual release date"
+            :disabled="isViewOnly"
           />
         </div>
       </div>
@@ -81,6 +96,7 @@
         type="textarea"
         label="Notes"
         :rows="3"
+        :disabled="isViewOnly"
       />
       <Card title="Copies" v-if="isExistingIssue">
         <template #header-actions>
@@ -148,10 +164,12 @@ interface Props {
   seriesId: number
   volumeId: number
   issue?: Issue | null
+  viewOnly?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  issue: null
+  issue: null,
+  viewOnly: false
 })
 
 const emit = defineEmits<{
@@ -177,6 +195,7 @@ const copies = ref<Copy[]>([])
 const loadingCopies = ref(false)
 const showCoverViewer = ref(false)
 const selectedCopy = ref<Copy | null>(null)
+const isViewOnly = ref(props.viewOnly)
 
 const defaultFormData = (): Partial<Issue> => ({
   issue_number: '',
@@ -313,6 +332,8 @@ const handleSubmit = async () => {
 const handleClose = () => {
   resetForm()
   copies.value = []
+  isViewOnly.value = props.viewOnly
+  isOpen.value = false
 }
 
 const openCoverViewer = (copy: Copy) => {
@@ -351,6 +372,7 @@ const formatBadgeClass = (format: string): string => {
 watch(() => props.modelValue, async (newValue) => {
   if (newValue) {
     resetForm()
+    isViewOnly.value = props.viewOnly
     // Load copies when modal opens with an existing issue
     if (props.issue?.issue_id) {
       await loadCopies(props.issue.issue_id)

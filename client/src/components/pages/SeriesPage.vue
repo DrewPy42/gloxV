@@ -83,6 +83,7 @@
         :is-editing="isEditing"
         :publishers="publishers"
         @update="handleFormUpdate"
+        @edit="isEditing = true"
       />
     </Modal>
 

@@ -4,6 +4,15 @@
       <!-- Main Details Column -->
       <div class="col-md-8">
         <Card title="Series Details">
+          <template #header-actions>
+            <button
+              class="btn btn-sm btn-primary"
+              @click="editSeries"
+              v-if="!isEditing"
+            >
+              <font-awesome-icon :icon="['fas', 'pen']" /> Edit
+            </button>
+          </template>
           <div class="row">
             <div class="col-md-8">
               <FormField
@@ -68,20 +77,17 @@
         <!-- Volumes Section -->
         <Card title="Volumes" v-if="series.series_id">
           <template #header-actions>
-            <button
-              class="btn btn-sm btn-primary"
-              @click="addVolume"
-            >
+            <button class="btn btn-sm btn-primary" @click="addVolume">
               <font-awesome-icon :icon="['fas', 'plus']" /> Add Volume
             </button>
           </template>
-          
+
           <div v-if="volumes.length === 0" class="text-muted text-center py-3">
             No volumes found
           </div>
           <div v-else class="volume-list">
-            <div 
-              v-for="volume in volumes" 
+            <div
+              v-for="volume in volumes"
               :key="volume.volume_id"
               class="volume-item"
               :class="{ active: selectedVolumeId === volume.volume_id }"
@@ -89,6 +95,13 @@
             >
               <span class="volume-number">Vol. {{ volume.volume_number }}</span>
               <span class="volume-issues">{{ volume.issue_count || 0 }} issues</span>
+              <button
+                class="btn btn-link btn-sm volume-view-btn p-0"
+                @click.stop="viewVolume(volume)"
+                title="View details"
+              >
+                <font-awesome-icon :icon="['fas', 'eye']" />
+              </button>
             </div>
           </div>
         </Card>
@@ -96,10 +109,7 @@
         <!-- Issues Section -->
         <Card title="Issues" v-if="selectedVolumeId">
           <template #header-actions>
-            <button
-              class="btn btn-sm btn-primary"
-              @click="addIssue"
-            >
+            <button class="btn btn-sm btn-primary" @click="addIssue">
               <font-awesome-icon :icon="['fas', 'plus']" /> Add Issue
             </button>
           </template>
@@ -198,7 +208,7 @@
           </div>
 
           <div class="text-center mt-3">
-            <button 
+            <button
               class="btn btn-outline-secondary btn-sm"
               @click="refreshStats"
               :disabled="loadingStats"
@@ -218,12 +228,7 @@
               class="publisher-logo mb-2"
             />
             <h6>{{ series.publisher_name }}</h6>
-            <a 
-              v-if="series.website" 
-              :href="series.website" 
-              target="_blank"
-              class="small"
-            >
+            <a v-if="series.website" :href="series.website" target="_blank" class="small">
               Visit Website
             </a>
           </div>
@@ -237,6 +242,7 @@
       v-model="showVolumeModal"
       :series-id="series.series_id"
       :volume="editingVolume"
+      :view-only="volumeViewOnly"
       @saved="handleVolumeSaved"
     />
 
@@ -247,6 +253,7 @@
       :series-id="series.series_id"
       :volume-id="selectedVolumeId"
       :issue="editingIssue"
+      :view-only="issueViewOnly"
       @saved="handleIssueSaved"
     />
 
@@ -268,12 +275,18 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { Card, FormField, StatCard, DataTable, Modal, type TableColumn } from '@/components/common'
-import { useVolumeStore, useIssueStore, useStatsStore, type Series, type Volume, type Issue } from '@/core'
+import {
+  useVolumeStore,
+  useIssueStore,
+  useStatsStore,
+  type Series,
+  type Volume,
+  type Issue
+} from '@/core'
 import { useImage, useConfirmation } from '@/composables'
 import { format } from 'date-fns'
 import VolumeModal from '@/components/modals/VolumeModal.vue'
 import IssueModal from '@/components/modals/IssueModal.vue'
-
 
 // ============================================================================
 // Props & Emits
@@ -292,6 +305,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: 'update', data: Partial<Series>): void
+  (e: 'edit'): void
 }>()
 
 // ============================================================================
@@ -316,19 +330,22 @@ const stats = ref<any>({})
 const selectedVolumeId = ref<number | null>(null)
 const loadingIssues = ref(false)
 const loadingStats = ref(false)
+const isEditing = computed(() => props.isEditing)
 
 // Modal state
 const showVolumeModal = ref(false)
 const editingVolume = ref<Volume | null>(null)
+const volumeViewOnly = ref(false)
 const showIssueModal = ref(false)
 const editingIssue = ref<Issue | null>(null)
+const issueViewOnly = ref(false)
 
 // ============================================================================
 // Computed
 // ============================================================================
 
-const publisherOptions = computed(() => 
-  props.publishers.map(p => ({
+const publisherOptions = computed(() =>
+  props.publishers.map((p) => ({
     value: p.publisher_id,
     label: p.publisher_name
   }))
@@ -343,8 +360,13 @@ const issueColumns: TableColumn[] = [
   { key: 'cover_images', label: '', width: '80px' },
   { key: 'issue_number', label: '#', width: '60px' },
   { key: 'issue_title', label: 'Title' },
-  { key: 'cover_date', label: 'Date', type: 'text', formatter: (value) => value ? format(new Date(value), 'MMM yyyy') : ''},
-  { key: 'copy_count', label: 'Copies', align: 'center' },
+  {
+    key: 'cover_date',
+    label: 'Date',
+    type: 'text',
+    formatter: (value) => (value ? format(new Date(value), 'MMM yyyy') : '')
+  },
+  { key: 'copy_count', label: 'Copies', align: 'center' }
 ]
 
 // ============================================================================
@@ -353,13 +375,13 @@ const issueColumns: TableColumn[] = [
 
 const loadVolumes = async () => {
   if (!props.series.series_id) return
-  
-  await volumeStore.fetchRecords({ 
+
+  await volumeStore.fetchRecords({
     filters: { series_id: props.series.series_id },
     limit: 100
   })
   volumes.value = volumeStore.records
-  
+
   // Auto-select first volume
   if (volumes.value.length > 0 && !selectedVolumeId.value) {
     selectVolume(volumes.value[0])
@@ -378,7 +400,7 @@ const loadIssues = async (volumeId: number) => {
 
 const loadStats = async () => {
   if (!props.series.series_id) return
-  
+
   loadingStats.value = true
   const data = await statsStore.fetchSeriesStats(props.series.series_id)
   if (data) {
@@ -398,6 +420,13 @@ const selectVolume = (volume: Volume) => {
 
 const addVolume = () => {
   editingVolume.value = null
+  volumeViewOnly.value = false
+  showVolumeModal.value = true
+}
+
+const viewVolume = (volume: Volume) => {
+  editingVolume.value = { ...volume }
+  volumeViewOnly.value = true
   showVolumeModal.value = true
 }
 
@@ -406,7 +435,7 @@ const handleVolumeSaved = async (volume: Volume) => {
   await loadStats()
   // Select the new/updated volume
   if (volume.volume_id) {
-    const savedVolume = volumes.value.find(v => v.volume_id === volume.volume_id)
+    const savedVolume = volumes.value.find((v) => v.volume_id === volume.volume_id)
     if (savedVolume) {
       selectVolume(savedVolume)
     }
@@ -415,16 +444,19 @@ const handleVolumeSaved = async (volume: Volume) => {
 
 const addIssue = () => {
   editingIssue.value = null
+  issueViewOnly.value = false
   showIssueModal.value = true
 }
 
 const editIssue = (issue: Issue) => {
   editingIssue.value = issue
+  issueViewOnly.value = false
   showIssueModal.value = true
 }
 
 const viewIssue = (issue: Issue) => {
   editingIssue.value = { ...issue }
+  issueViewOnly.value = true
   showIssueModal.value = true
 }
 
@@ -456,17 +488,29 @@ const getCoverPaths = (coverImagesString: string): string[] => {
   return coverImagesString.split(',').slice(0, 4)
 }
 
+function editSeries() {
+  emit('edit')
+}
+
 // ============================================================================
 // Watchers
 // ============================================================================
 
-watch(() => props.series, (newSeries) => {
-  formData.value = { ...newSeries }
-}, { immediate: true })
+watch(
+  () => props.series,
+  (newSeries) => {
+    formData.value = { ...newSeries }
+  },
+  { immediate: true }
+)
 
-watch(formData, (newData) => {
-  emit('update', newData)
-}, { deep: true })
+watch(
+  formData,
+  (newData) => {
+    emit('update', newData)
+  },
+  { deep: true }
+)
 
 // ============================================================================
 // Lifecycle
@@ -521,6 +565,16 @@ onMounted(() => {
     .volume-issues {
       font-size: 0.75rem;
       color: #6c757d;
+    }
+
+    .volume-view-btn {
+      font-size: 0.7rem;
+      color: #adb5bd;
+      line-height: 1;
+
+      &:hover {
+        color: #0d6efd;
+      }
     }
   }
 

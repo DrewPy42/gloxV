@@ -58,6 +58,7 @@
         :is-editing="isEditing"
         @update="handleFormUpdate"
         @view-series="handleViewSeries"
+        @edit="isEditing = true"
       />
     </Modal>
   </div>

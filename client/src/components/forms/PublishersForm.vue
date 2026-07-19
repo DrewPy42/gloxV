@@ -2,6 +2,15 @@
   <div class="publisher-form">
     <!-- Publisher Details Card -->
     <Card title="Publisher Details">
+      <template #header-actions>
+        <button
+          class="btn btn-sm btn-primary"
+          @click="emit('edit')"
+          v-if="!props.isEditing"
+        >
+          <font-awesome-icon :icon="['fas', 'pen']" /> Edit
+        </button>
+      </template>
       <div class="row">
         <!-- Logo Display -->
         <div class="col-md-2 text-center">
@@ -124,7 +133,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { Card, FormField, StatCard, DataTable, type TableColumn } from '@/components/common'
 import { useSeriesStore, type Publisher, type Series } from '@/core'
@@ -142,6 +151,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (e: 'update', data: Partial<Publisher>): void
   (e: 'view-series', series: Series): void
+  (e: 'edit'): void
 }>()
 
 // ============================================================================

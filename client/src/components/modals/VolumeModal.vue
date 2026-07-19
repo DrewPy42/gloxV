@@ -5,9 +5,17 @@
     :loading="loading"
     :confirm-disabled="!isValid"
     :confirm-text="isEditing ? 'Save' : 'Add'"
+    :show-confirm-button="!isViewOnly"
+    :show-cancel-button="!isViewOnly"
     @confirm="handleSubmit"
     @close="handleClose"
   >
+    <template v-if="isViewOnly" #footer>
+      <button type="button" class="btn btn-secondary" @click="handleClose">Close</button>
+      <button type="button" class="btn btn-primary" @click="isViewOnly = false">
+        <font-awesome-icon :icon="['fas', 'pen']" /> Edit
+      </button>
+    </template>
     <div class="volume-form">
       <div class="row">
         <div class="col-md-6">
@@ -18,6 +26,7 @@
             :required="true"
             :min="1"
             :error-message="errors.volume_number"
+            :disabled="isViewOnly"
           />
         </div>
         <div class="col-md-6">
@@ -27,6 +36,7 @@
             :error-message="errors.issue_range"
             help-text="e.g., 1-416, 500+ or 1-13"
             placeholder="1-100"
+            :disabled="isViewOnly"
           />
         </div>
       </div>
@@ -55,6 +65,7 @@
             type="date"
             label="Start Date"
             help-text="Publication start date"
+            :disabled="isViewOnly"
           />
         </div>
         <div class="col-md-6">
@@ -63,6 +74,7 @@
             type="date"
             label="End Date"
             help-text="Publication end date"
+            :disabled="isViewOnly"
           />
         </div>
       </div>
@@ -72,6 +84,7 @@
         type="textarea"
         label="Notes"
         :rows="3"
+        :disabled="isViewOnly"
       />
     </div>
   </Modal>
@@ -79,6 +92,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { Modal, FormField } from '@/components/common'
 import { useVolumeStore, type Volume } from '@/core'
 import { getIssueRangeBounds } from '@/core/functions/coreFunctions'
@@ -91,10 +105,12 @@ interface Props {
   modelValue: boolean
   seriesId: number
   volume?: Volume | null
+  viewOnly?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  volume: null
+  volume: null,
+  viewOnly: false
 })
 
 const emit = defineEmits<{
@@ -114,6 +130,7 @@ const volumeStore = useVolumeStore()
 
 const loading = ref(false)
 const errors = ref<Record<string, string>>({})
+const isViewOnly = ref(props.viewOnly)
 
 const defaultFormData = (): Partial<Volume> => ({
   volume_number: 1,
@@ -207,6 +224,8 @@ const handleSubmit = async () => {
 
 const handleClose = () => {
   resetForm()
+  isViewOnly.value = props.viewOnly
+  isOpen.value = false
 }
 
 // ============================================================================
@@ -216,6 +235,7 @@ const handleClose = () => {
 watch(() => props.modelValue, (newValue) => {
   if (newValue) {
     resetForm()
+    isViewOnly.value = props.viewOnly
   }
 })
 
