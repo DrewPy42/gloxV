@@ -74,6 +74,7 @@
       size="xl"
       :show-confirm-button="isEditing"
       :confirm-text="isEditing ? 'Save Changes' : 'Close'"
+      :cancel-text="isEditing ? 'Cancel' : 'Close'"
       @confirm="handleSave"
       @close="closeModal"
     >
