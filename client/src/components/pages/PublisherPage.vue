@@ -41,57 +41,30 @@
       </template>
     </DataTable>
 
-    <!-- View/Edit Modal -->
-    <Modal
-      :model-value="isModalOpen"
-      @update:model-value="isModalOpen = $event"
-      :title="modalTitle"
-      size="xl"
-      :show-confirm-button="isEditing"
-      :confirm-text="isEditing ? 'Save Changes' : 'Close'"
-      :cancel-text="isEditing ? 'Cancel' : 'Close'"
-      @confirm="handleSave"
-      @close="closeModal"
-    >
-      <PublishersForm
-        v-if="selectedPublisher"
-        :publisher="selectedPublisher"
-        :is-editing="isEditing"
-        @update="handleFormUpdate"
-        @view-series="handleViewSeries"
-        @edit="isEditing = true"
-      />
-    </Modal>
+    <PublisherModal
+      v-model="isModalOpen"
+      :publisher="selectedPublisher"
+      :view-only="viewOnly"
+      @saved="publisherStore.fetchRecords()"
+      @view-series="handleViewSeries"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { DataTable, Modal, type TableColumn } from '@/components/common'
-import PublishersForm from '@/components/forms/PublishersForm.vue'
+import { DataTable, type TableColumn } from '@/components/common'
+import { PublisherModal } from '@/components/modals'
 import { usePublisherStore, type Publisher, type Series } from '@/core'
 import { useImage } from '@/composables'
-
-// ============================================================================
-// Stores & Composables
-// ============================================================================
 
 const publisherStore = usePublisherStore()
 const { getLogoImageUrl } = useImage()
 
-// ============================================================================
-// State
-// ============================================================================
-
 const isModalOpen = ref(false)
-const isEditing = ref(false)
+const viewOnly = ref(true)
 const selectedPublisher = ref<Publisher | null>(null)
-const formData = ref<Partial<Publisher>>({})
-
-// ============================================================================
-// Table Configuration
-// ============================================================================
 
 const columns: TableColumn[] = [
   { key: 'logo_path', label: '', width: '60px', align: 'center' },
@@ -102,66 +75,26 @@ const columns: TableColumn[] = [
   { key: 'total_value', label: 'Total Value', align: 'center', type: 'currency', sortable: true }
 ]
 
-// ============================================================================
-// Computed
-// ============================================================================
-
-const modalTitle = computed(() => {
-  if (!selectedPublisher.value) return 'Publisher Details'
-  return isEditing.value
-    ? `Edit: ${selectedPublisher.value.publisher_name}`
-    : selectedPublisher.value.publisher_name
-})
-
-// ============================================================================
-// Methods
-// ============================================================================
-
 const handleSearch = (query: string) => {
   publisherStore.setSearch(query)
 }
 
 const openViewModal = (record: Publisher) => {
   selectedPublisher.value = { ...record }
-  isEditing.value = false
+  viewOnly.value = true
   isModalOpen.value = true
 }
 
 const openEditModal = (record: Publisher) => {
   selectedPublisher.value = { ...record }
-  formData.value = { ...record }
-  isEditing.value = true
+  viewOnly.value = false
   isModalOpen.value = true
-}
-
-const closeModal = () => {
-  isModalOpen.value = false
-  selectedPublisher.value = null
-  formData.value = {}
-  isEditing.value = false
-}
-
-const handleFormUpdate = (data: Partial<Publisher>) => {
-  formData.value = { ...formData.value, ...data }
-}
-
-const handleSave = async () => {
-  if (!selectedPublisher.value?.publisher_id) return
-
-  await publisherStore.updateRecord(selectedPublisher.value.publisher_id, formData.value)
-  closeModal()
 }
 
 const handleViewSeries = (series: Series) => {
   // TODO: Navigate to series detail or open series modal
   console.log('View series:', series)
-  // You can implement navigation here, for example:
-  // router.push({ name: 'series', params: { id: series.series_id } })
 }
-
-// ============================================================================
-// Lifecycle
-// ============================================================================
 
 onMounted(() => {
   publisherStore.fetchRecords()

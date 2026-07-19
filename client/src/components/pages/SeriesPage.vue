@@ -1,7 +1,7 @@
 <template>
   <div class="series-dashboard">
     <h1>Series</h1>
-    
+
     <DataTable
       :records="seriesStore.records"
       :columns="columns"
@@ -24,14 +24,12 @@
       @edit="openEditModal"
       @delete="handleDelete"
     >
-      <!-- Custom cell for title with link -->
       <template #cell-title="{ record }">
         <a href="#" @click.prevent="openViewModal(record)">
           {{ record.title }}
         </a>
       </template>
 
-      <!-- Custom cell for publisher logo -->
       <template #cell-logo_path="{ record }">
         <img
           v-if="record.logo_path"
@@ -46,7 +44,6 @@
         />
       </template>
 
-      <!-- Custom cell for limited series -->
       <template #cell-is_limited_series="{ record }">
         <font-awesome-icon
           v-if="record.is_limited_series"
@@ -55,10 +52,9 @@
         />
       </template>
 
-      <!-- Custom cell for notes -->
       <template #cell-notes="{ record }">
-        <span 
-          v-if="record.notes" 
+        <span
+          v-if="record.notes"
           class="notes-indicator"
           :title="record.notes"
         >
@@ -67,26 +63,12 @@
       </template>
     </DataTable>
 
-    <!-- View/Edit Modal -->
-    <Modal
+    <SeriesModal
       v-model="isModalOpen"
-      :title="modalTitle"
-      size="xl"
-      :show-confirm-button="isEditing"
-      :confirm-text="isEditing ? 'Save Changes' : 'Close'"
-      :cancel-text="isEditing ? 'Cancel' : 'Close'"
-      @confirm="handleSave"
-      @close="closeModal"
-    >
-      <SeriesForm
-        v-if="selectedSeries"
-        :series="selectedSeries"
-        :is-editing="isEditing"
-        :publishers="publishers"
-        @update="handleFormUpdate"
-        @edit="isEditing = true"
-      />
-    </Modal>
+      :series="selectedSeries"
+      :view-only="viewOnly"
+      @saved="seriesStore.fetchRecords()"
+    />
 
     <!-- Delete Confirmation -->
     <Modal
@@ -104,37 +86,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { DataTable, Modal, type TableColumn } from '@/components/common'
-import SeriesForm from '@/components/forms/SeriesForm.vue'
-import { useSeriesStore, usePublisherStoreExtended, type Series } from '@/core'
+import { SeriesModal } from '@/components/modals'
+import { useSeriesStore, type Series } from '@/core'
 import { useImage, useFormatting } from '@/composables'
 
-// ============================================================================
-// Stores & Composables
-// ============================================================================
-
 const seriesStore = useSeriesStore()
-const publisherStore = usePublisherStoreExtended()
 const { getLogoImageUrl } = useImage()
 const { formatPercentage } = useFormatting()
 
-// ============================================================================
-// State
-// ============================================================================
-
 const isModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
-const isEditing = ref(false)
+const viewOnly = ref(true)
 const selectedSeries = ref<Series | null>(null)
-const formData = ref<Partial<Series>>({})
-const publishers = ref<any[]>([])
 const searchQuery = ref('')
-
-// ============================================================================
-// Table Configuration
-// ============================================================================
 
 const columns: TableColumn[] = [
   { key: 'title', label: 'Title', sortable: true, type: 'link' },
@@ -142,9 +109,9 @@ const columns: TableColumn[] = [
   { key: 'logo_path', label: 'Publisher', align: 'center' },
   { key: 'total_cost', label: 'Total Cost', align: 'center', type: 'currency' },
   { key: 'total_value', label: 'Total Value', align: 'center', type: 'currency' },
-  { 
-    key: 'value_change', 
-    label: 'Gain', 
+  {
+    key: 'value_change',
+    label: 'Gain',
     align: 'center',
     formatter: (_, record) => {
       if (!record.total_cost || record.total_cost === 0) return '—'
@@ -158,19 +125,6 @@ const columns: TableColumn[] = [
   { key: 'notes', label: 'Notes', align: 'center' }
 ]
 
-// ============================================================================
-// Computed
-// ============================================================================
-
-const modalTitle = computed(() => {
-  if (!selectedSeries.value) return 'Add Series'
-  return isEditing.value ? `Edit: ${selectedSeries.value.title}` : selectedSeries.value.title
-})
-
-// ============================================================================
-// Methods
-// ============================================================================
-
 const handleSearch = (query: string) => {
   searchQuery.value = query
   seriesStore.setSearch(query)
@@ -182,45 +136,20 @@ const handleRowClick = (record: Series) => {
 
 const openAddModal = () => {
   selectedSeries.value = {} as Series
-  isEditing.value = true
+  viewOnly.value = false
   isModalOpen.value = true
 }
 
 const openViewModal = (record: Series) => {
   selectedSeries.value = { ...record }
-  isEditing.value = false
+  viewOnly.value = true
   isModalOpen.value = true
 }
 
 const openEditModal = (record: Series) => {
   selectedSeries.value = { ...record }
-  formData.value = { ...record }
-  isEditing.value = true
+  viewOnly.value = false
   isModalOpen.value = true
-}
-
-const closeModal = () => {
-  isModalOpen.value = false
-  selectedSeries.value = null
-  formData.value = {}
-}
-
-const handleFormUpdate = (data: Partial<Series>) => {
-  formData.value = { ...formData.value, ...data }
-}
-
-const handleSave = async () => {
-  if (!selectedSeries.value) return
-
-  if (selectedSeries.value.series_id) {
-    // Update existing
-    await seriesStore.updateRecord(selectedSeries.value.series_id, formData.value)
-  } else {
-    // Create new
-    await seriesStore.createRecord(formData.value)
-  }
-  
-  closeModal()
 }
 
 const handleDelete = (record: Series) => {
@@ -236,13 +165,8 @@ const confirmDelete = async () => {
   selectedSeries.value = null
 }
 
-// ============================================================================
-// Lifecycle
-// ============================================================================
-
 onMounted(async () => {
   await seriesStore.fetchRecords()
-  publishers.value = await publisherStore.fetchAllPublishers()
 })
 </script>
 
