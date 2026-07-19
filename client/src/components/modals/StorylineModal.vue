@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { Modal } from '@/components/common'
+import { Modal, Card } from '@/components/common'
 import { useStorylineStoreExtended, type Storyline, type StorylineIssue } from '@/core'
 
 // ============================================================================
@@ -104,12 +104,16 @@ watch(() => props.modelValue, async (newValue) => {
     @confirm="handleSubmit"
     @close="handleClose"
   >
-    <div v-if="storylineDetails" class="storyline-details">
-      <div class="d-flex justify-content-end mb-2" v-if="isViewOnly">
-        <button type="button" class="btn btn-sm btn-outline-secondary" @click="handleEdit">
+    <Card v-if="storylineDetails" title="Storyline Details">
+      <template #header-actions>
+        <button
+          v-if="isViewOnly"
+          class="btn btn-sm btn-primary"
+          @click="handleEdit"
+        >
           <font-awesome-icon :icon="['fas', 'pen']" /> Edit
         </button>
-      </div>
+      </template>
 
       <p v-if="storylineDetails.storyline.description" class="description">
         {{ storylineDetails.storyline.description }}
@@ -132,7 +136,7 @@ watch(() => props.modelValue, async (newValue) => {
           </span>
         </div>
       </div>
-    </div>
+    </Card>
 
     <div v-else-if="!loading" class="text-muted text-center py-4">
       No details available.
@@ -141,10 +145,6 @@ watch(() => props.modelValue, async (newValue) => {
 </template>
 
 <style scoped lang="scss">
-.description {
-  margin-bottom: 1rem;
-}
-
 .reading-order-list {
   display: flex;
   flex-direction: column;
