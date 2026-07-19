@@ -1,7 +1,7 @@
 <template>
   <div class="storyline-page">
     <h1>Storylines</h1>
-    
+
     <DataTable
       :records="storylineStore.records"
       :columns="columns"
@@ -33,52 +33,25 @@
       </template>
     </DataTable>
 
-    <!-- View Modal -->
-    <Modal
+    <StorylineModal
       v-model="isModalOpen"
-      :title="selectedStoryline?.storyline_name || 'Storyline'"
-      size="xl"
-      :show-confirm-button="false"
-    >
-      <div v-if="storylineDetails" class="storyline-details">
-        <p v-if="storylineDetails.storyline.description">
-          {{ storylineDetails.storyline.description }}
-        </p>
-        
-        <h5>Reading Order ({{ storylineDetails.issues.length }} issues)</h5>
-        <div class="reading-order-list">
-          <div 
-            v-for="issue in storylineDetails.issues" 
-            :key="issue.storyline_issue_id"
-            class="reading-order-item"
-            :class="{ owned: issue.owned }"
-          >
-            <span class="order">{{ issue.reading_order }}</span>
-            <span class="part-label" v-if="issue.part_label">{{ issue.part_label }}</span>
-            <span class="series">{{ issue.series_title }}</span>
-            <span class="issue">#{{ issue.issue_number }}</span>
-            <span class="owned-badge" v-if="issue.owned">
-              <font-awesome-icon :icon="['fas', 'check']" />
-            </span>
-          </div>
-        </div>
-      </div>
-    </Modal>
+      :storyline="selectedStoryline"
+      :view-only="true"
+    />
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { DataTable, Modal, type TableColumn } from '@/components/common'
+import { DataTable, type TableColumn } from '@/components/common'
 import { useStorylineStoreExtended, type Storyline } from '@/core'
+import { StorylineModal } from '@/components/modals'
 
 const storylineStore = useStorylineStoreExtended()
 
-
 const isModalOpen = ref(false)
 const selectedStoryline = ref<Storyline | null>(null)
-const storylineDetails = ref<any>(null)
 
 const columns: TableColumn[] = [
   { key: 'storyline_name', label: 'Name', sortable: true, type: 'link' },
@@ -103,10 +76,9 @@ const handleRowClick = (record: Storyline) => {
   openViewModal(record)
 }
 
-const openViewModal = async (record: Storyline) => {
+const openViewModal = (record: Storyline) => {
   selectedStoryline.value = record
   isModalOpen.value = true
-  storylineDetails.value = await storylineStore.fetchStorylineWithIssues(record.storyline_id)
 }
 
 onMounted(() => {
