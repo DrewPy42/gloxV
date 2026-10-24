@@ -46,7 +46,14 @@
       :publisher="selectedPublisher"
       :view-only="viewOnly"
       @saved="publisherStore.fetchRecords()"
-      @view-series="handleViewSeries"
+      @view-series="openSeriesModal($event, true)"
+      @edit-series="openSeriesModal($event, false)"
+    />
+
+    <SeriesModal
+      v-model="isSeriesModalOpen"
+      :series="selectedSeries"
+      :view-only="seriesViewOnly"
     />
   </div>
 </template>
@@ -55,7 +62,7 @@
 import { ref, onMounted } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { DataTable, type TableColumn } from '@/components/common'
-import { PublisherModal } from '@/components/modals'
+import { PublisherModal, SeriesModal } from '@/components/modals'
 import { usePublisherStore, type Publisher, type Series } from '@/core'
 import { useImage } from '@/composables'
 
@@ -65,6 +72,9 @@ const { getLogoImageUrl } = useImage()
 const isModalOpen = ref(false)
 const viewOnly = ref(true)
 const selectedPublisher = ref<Publisher | null>(null)
+const isSeriesModalOpen = ref(false)
+const seriesViewOnly = ref(true)
+const selectedSeries = ref<Series | null>(null)
 
 const columns: TableColumn[] = [
   { key: 'logo_path', label: '', width: '60px', align: 'center' },
@@ -91,9 +101,10 @@ const openEditModal = (record: Publisher) => {
   isModalOpen.value = true
 }
 
-const handleViewSeries = (series: Series) => {
-  // TODO: Navigate to series detail or open series modal
-  console.log('View series:', series)
+const openSeriesModal = (series: Series, viewOnly: boolean) => {
+  selectedSeries.value = { ...series }
+  seriesViewOnly.value = viewOnly
+  isSeriesModalOpen.value = true
 }
 
 onMounted(() => {

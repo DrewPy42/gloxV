@@ -23,6 +23,7 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'saved', publisher: Publisher): void
   (e: 'view-series', series: Series): void
+  (e: 'edit-series', series: Series): void
 }>()
 
 // ============================================================================
@@ -93,6 +94,10 @@ const handleViewSeries = (series: Series) => {
   emit('view-series', series)
 }
 
+const handleEditSeries = (series: Series) => {
+  emit('edit-series', series)
+}
+
 // ============================================================================
 // Watchers
 // ============================================================================
@@ -123,6 +128,7 @@ watch(() => props.modelValue, (newValue) => {
       @update="handleFormUpdate"
       @logo-selected="pendingLogo = $event"
       @view-series="handleViewSeries"
+      @edit-series="handleEditSeries"
       @edit="isViewOnly = false"
     />
   </Modal>

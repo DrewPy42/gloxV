@@ -139,10 +139,11 @@
         id-field="series_id"
         entity-name="series"
         :show-add-button="false"
-        :actions="['view']"
+        :actions="['view', 'edit']"
         @page-changed="handleSeriesPageChange"
         @per-page-changed="handleSeriesPerPageChange"
         @view="handleViewSeries"
+        @edit="handleEditSeries"
       >
         <template #cell-title="{ record }">
           <a href="#" @click.prevent="handleViewSeries(record)">
@@ -173,6 +174,7 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (e: 'update', data: Partial<Publisher>): void
   (e: 'view-series', series: Series): void
+  (e: 'edit-series', series: Series): void
   (e: 'edit'): void
   (e: 'logo-selected', file: File | null): void
 }>()
@@ -260,6 +262,10 @@ const handleSeriesPerPageChange = (perPage: number) => {
 
 const handleViewSeries = (series: Series) => {
   emit('view-series', series)
+}
+
+const handleEditSeries = (series: Series) => {
+  emit('edit-series', series)
 }
 
 const clearLogoPreview = () => {
