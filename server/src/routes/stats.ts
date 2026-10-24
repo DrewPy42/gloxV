@@ -41,22 +41,19 @@ router.get('/api/stats', async (req: Request, res: Response) => {
 
       res.json(stats[0]);
     } else {
-      // Overall collection stats
+      // Overall collection stats. Cost/value are summed in subqueries because
+      // joining volume and issue side by side duplicates copy rows.
       const stats = await query<RowDataPacket[]>(
         `SELECT 
-          COUNT(DISTINCT s.series_id) as series_count,
-          COUNT(DISTINCT v.volume_id) as volume_count,
-          COUNT(DISTINCT i.issue_id) as issue_count,
-          COUNT(DISTINCT c.copy_id) as copy_count,
-          COUNT(DISTINCT ce.collected_edition_id) as collected_edition_count,
-          COALESCE(SUM(c.cover_price), 0) + COALESCE((SELECT SUM(cover_price) FROM collected_edition WHERE deleted_at IS NULL), 0) as total_cost,
-          COALESCE(SUM(c.current_value), 0) + COALESCE((SELECT SUM(current_value) FROM collected_edition WHERE deleted_at IS NULL), 0) as total_value
-         FROM series s
-         LEFT JOIN volume v ON s.series_id = v.series_id AND v.deleted_at IS NULL
-         LEFT JOIN issue i ON s.series_id = i.series_id AND i.deleted_at IS NULL
-         LEFT JOIN copy c ON i.issue_id = c.issue_id AND c.deleted_at IS NULL
-         LEFT JOIN collected_edition ce ON ce.deleted_at IS NULL
-         WHERE s.deleted_at IS NULL`
+          (SELECT COUNT(*) FROM series WHERE deleted_at IS NULL) as series_count,
+          (SELECT COUNT(*) FROM volume v JOIN series s ON v.series_id = s.series_id AND s.deleted_at IS NULL WHERE v.deleted_at IS NULL) as volume_count,
+          (SELECT COUNT(*) FROM issue i JOIN series s ON i.series_id = s.series_id AND s.deleted_at IS NULL WHERE i.deleted_at IS NULL) as issue_count,
+          (SELECT COUNT(*) FROM copy c JOIN issue i ON c.issue_id = i.issue_id AND i.deleted_at IS NULL JOIN series s ON i.series_id = s.series_id AND s.deleted_at IS NULL WHERE c.deleted_at IS NULL) as copy_count,
+          (SELECT COUNT(*) FROM collected_edition WHERE deleted_at IS NULL) as collected_edition_count,
+          COALESCE((SELECT SUM(c.cover_price) FROM copy c JOIN issue i ON c.issue_id = i.issue_id AND i.deleted_at IS NULL JOIN series s ON i.series_id = s.series_id AND s.deleted_at IS NULL WHERE c.deleted_at IS NULL), 0)
+            + COALESCE((SELECT SUM(cover_price) FROM collected_edition WHERE deleted_at IS NULL), 0) as total_cost,
+          COALESCE((SELECT SUM(c.current_value) FROM copy c JOIN issue i ON c.issue_id = i.issue_id AND i.deleted_at IS NULL JOIN series s ON i.series_id = s.series_id AND s.deleted_at IS NULL WHERE c.deleted_at IS NULL), 0)
+            + COALESCE((SELECT SUM(current_value) FROM collected_edition WHERE deleted_at IS NULL), 0) as total_value`
       );
 
       const result = stats[0];

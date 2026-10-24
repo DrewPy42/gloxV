@@ -7,53 +7,88 @@
       <h2>Overview</h2>
       <div class="row" v-if="collectionStats">
         <div class="col-md-2 col-sm-4 col-6">
-          <StatCard :value="collectionStats.series_count" label="Series" icon="book-open" variant="primary" type="number" />
+          <StatCard
+            :value="collectionStats.series_count"
+            label="Series"
+            icon="book-open"
+            variant="primary"
+            type="number"
+          />
         </div>
         <div class="col-md-2 col-sm-4 col-6">
-          <StatCard :value="collectionStats.volume_count" label="Volumes" icon="layer-group" variant="info" type="number" />
+          <StatCard
+            :value="collectionStats.volume_count"
+            label="Volumes"
+            icon="layer-group"
+            variant="info"
+            type="number"
+          />
         </div>
         <div class="col-md-2 col-sm-4 col-6">
-          <StatCard :value="collectionStats.issue_count" label="Issues" icon="file-lines" variant="info" type="number" />
+          <StatCard
+            :value="collectionStats.issue_count"
+            label="Issues"
+            icon="file-lines"
+            variant="info"
+            type="number"
+          />
         </div>
         <div class="col-md-2 col-sm-4 col-6">
-          <StatCard :value="collectionStats.copy_count" label="Copies" icon="copy" variant="success" type="number" />
+          <StatCard
+            :value="collectionStats.copy_count"
+            label="Copies"
+            icon="copy"
+            variant="success"
+            type="number"
+          />
         </div>
         <div class="col-md-2 col-sm-4 col-6">
-          <StatCard :value="collectionStats.total_cost" label="Invested" icon="receipt" variant="warning" type="currency" />
+          <StatCard
+            :value="collectionStats.total_cost"
+            label="Invested"
+            icon="receipt"
+            variant="warning"
+            type="currency"
+          />
         </div>
         <div class="col-md-2 col-sm-4 col-6">
-          <StatCard :value="collectionStats.total_value" label="Value" icon="dollar-sign" variant="success" type="currency" />
+          <StatCard
+            :value="collectionStats.total_value"
+            label="Value"
+            icon="dollar-sign"
+            variant="success"
+            type="currency"
+          />
         </div>
         <div class="col-md-2 col-sm-4 col-6">
-          <StatCard :value="collectionStats.value_change_percent" label="Value Increase" icon="arrow-up-right" variant="success" type="percentage" />
+          <StatCard
+            :value="collectionStats.value_change_percent"
+            label="Value Increase"
+            icon="arrow-up-right"
+            variant="success"
+            type="percentage"
+          />
         </div>
         <div class="col-md-2 col-sm-4 col-6">
-          <StatCard :value="Number(collectionStats.issues_per_series).toFixed(1)" label="Issues per Title" icon="file-lines" variant="info" />
+          <StatCard
+            :value="Number(collectionStats.issues_per_series).toFixed(1)"
+            label="Issues per Title"
+            icon="file-lines"
+            variant="info"
+          />
         </div>
         <div class="col-md-2 col-sm-4 col-6">
-          <StatCard :value="Number(collectionStats.copies_per_issue).toFixed(2)" label="Copies per Issue" icon="copy" variant="success" />
+          <StatCard
+            :value="Number(collectionStats.copies_per_issue).toFixed(2)"
+            label="Copies per Issue"
+            icon="copy"
+            variant="success"
+          />
         </div>
       </div>
     </section>
 
     <div class="row">
-      <!-- By Publisher -->
-      <div class="col-md-6">
-        <section class="stats-section">
-          <h2>By Publisher</h2>
-          <DataTable
-            :records="publisherStats"
-            :columns="publisherColumns"
-            :loading="loadingPublisher"
-            :paginated="false"
-            :show-header="false"
-            :show-actions="false"
-            id-field="publisher_id"
-            entity-name="publishers"
-          />
-        </section>
-      </div>
-
       <!-- By Age -->
       <div class="col-md-6">
         <section class="stats-section">
@@ -67,25 +102,6 @@
             :show-actions="false"
             id-field="comic_age_id"
             entity-name="ages"
-          />
-        </section>
-      </div>
-    </div>
-
-    <div class="row">
-      <!-- By Condition -->
-      <div class="col-md-6">
-        <section class="stats-section">
-          <h2>By Condition</h2>
-          <DataTable
-            :records="conditionStats"
-            :columns="conditionColumns"
-            :loading="loadingCondition"
-            :paginated="false"
-            :show-header="false"
-            :show-actions="false"
-            id-field="condition_id"
-            entity-name="conditions"
           />
         </section>
       </div>
@@ -111,13 +127,54 @@
         </section>
       </div>
     </div>
+
+    <div class="row">
+      <!-- By Condition -->
+      <div class="col-md-6">
+        <section class="stats-section">
+          <h2>By Condition</h2>
+          <DataTable
+            :records="conditionStats"
+            :columns="conditionColumns"
+            :loading="loadingCondition"
+            :paginated="false"
+            :show-header="false"
+            :show-actions="false"
+            id-field="condition_id"
+            entity-name="conditions"
+          />
+        </section>
+      </div>
+
+      <!-- By Publisher -->
+      <div class="col-md-6">
+        <section class="stats-section">
+          <h2>By Publisher</h2>
+          <DataTable
+            :records="publisherStats"
+            :columns="publisherColumns"
+            :loading="loadingPublisher"
+            :paginated="false"
+            :show-header="false"
+            :show-actions="false"
+            id-field="publisher_id"
+            entity-name="publishers"
+          />
+        </section>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { StatCard, DataTable, type TableColumn } from '@/components/common'
-import { useStatsStore, type CollectionStats, type PublisherStats, type HighValueCopy } from '@/core'
+import {
+  useStatsStore,
+  type CollectionStats,
+  type PublisherStats,
+  type HighValueCopy
+} from '@/core'
 import { fetchWrapper } from '@/core'
 
 const statsStore = useStatsStore()
@@ -172,17 +229,25 @@ const loadStats = async () => {
   // By Age
   loadingAge.value = true
   try {
-    const data = await fetchWrapper.get<{ results: any[] }>('http://localhost:3000/api/stats/by-age')
+    const data = await fetchWrapper.get<{ results: any[] }>(
+      'http://localhost:3000/api/stats/by-age'
+    )
     ageStats.value = data.results
-  } catch (e) { console.error(e) }
+  } catch (e) {
+    console.error(e)
+  }
   loadingAge.value = false
 
   // By Condition
   loadingCondition.value = true
   try {
-    const data = await fetchWrapper.get<{ results: any[] }>('http://localhost:3000/api/stats/by-condition')
+    const data = await fetchWrapper.get<{ results: any[] }>(
+      'http://localhost:3000/api/stats/by-condition'
+    )
     conditionStats.value = data.results
-  } catch (e) { console.error(e) }
+  } catch (e) {
+    console.error(e)
+  }
   loadingCondition.value = false
 
   // High Value
