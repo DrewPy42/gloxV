@@ -24,6 +24,15 @@
         <div class="col-md-2 col-sm-4 col-6">
           <StatCard :value="collectionStats.total_value" label="Value" icon="dollar-sign" variant="success" type="currency" />
         </div>
+        <div class="col-md-2 col-sm-4 col-6">
+          <StatCard :value="collectionStats.value_change_percent" label="Value Increase" icon="arrow-up-right" variant="success" type="percentage" />
+        </div>
+        <div class="col-md-2 col-sm-4 col-6">
+          <StatCard :value="Number(collectionStats.issues_per_series).toFixed(1)" label="Issues per Title" icon="file-lines" variant="info" />
+        </div>
+        <div class="col-md-2 col-sm-4 col-6">
+          <StatCard :value="Number(collectionStats.copies_per_issue).toFixed(2)" label="Copies per Issue" icon="copy" variant="success" />
+        </div>
       </div>
     </section>
 
@@ -84,7 +93,7 @@
       <!-- High Value -->
       <div class="col-md-6">
         <section class="stats-section">
-          <h2>Most Valuable Comics</h2>
+          <h2>Top 10 Most Valuable Comics</h2>
           <DataTable
             :records="highValueCopies"
             :columns="highValueColumns"

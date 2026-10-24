@@ -459,6 +459,8 @@ export interface CollectionStats {
   total_cost: number
   total_value: number
   value_change_percent: number
+  issues_per_series: number
+  copies_per_issue: number
 }
 
 export interface PublisherStats {

@@ -63,6 +63,12 @@ router.get('/api/stats', async (req: Request, res: Response) => {
       result.value_change_percent = result.total_cost > 0 
         ? (result.total_value - result.total_cost) / result.total_cost 
         : 0;
+      result.issues_per_series = result.series_count > 0
+        ? result.issue_count / result.series_count
+        : 0;
+      result.copies_per_issue = result.issue_count > 0
+        ? result.copy_count / result.issue_count
+        : 0;
 
       res.json(result);
     }

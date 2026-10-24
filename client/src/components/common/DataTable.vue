@@ -205,10 +205,10 @@
     </div>
 
     <!-- Footer with pagination -->
-    <div class="data-table-footer" v-if="showFooter">
+    <div class="data-table-footer" v-if="showFooter && (paginated || $slots['footer-left'] || $slots['footer-center'] || $slots['footer-right'])">
       <div class="footer-left">
         <slot name="footer-left">
-          <span class="record-count">
+          <span v-if="paginated" class="record-count">
             Showing {{ startRecord }} - {{ endRecord }} of {{ totalRecords }} {{ entityName }}
           </span>
         </slot>
