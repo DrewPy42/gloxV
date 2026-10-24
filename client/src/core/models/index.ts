@@ -404,6 +404,7 @@ export interface StorylineIssue {
   cover_date?: string
   series_id?: number
   series_title?: string
+  cover_image_path?: string | null
   owned?: number
 }
 

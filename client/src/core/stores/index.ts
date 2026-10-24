@@ -407,8 +407,21 @@ export function useStorylineStoreExtended() {
     }
   }
 
+  const reorderStorylineIssues = async (storylineId: number, issueIds: number[]) => {
+    try {
+      await fetchWrapper.put(`${API_BASE}/storylines/${storylineId}/issues/reorder`, {
+        issue_ids: issueIds
+      })
+      return true
+    } catch (err) {
+      console.error('Error reordering storyline issues:', err)
+      return false
+    }
+  }
+
   return Object.assign(baseStore, {
     fetchStorylineWithIssues,
+    reorderStorylineIssues,
     addIssueToStoryline,
     removeIssueFromStoryline
   })

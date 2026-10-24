@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { Modal, Card } from '@/components/common'
+import { useImage } from '@/composables'
 import { useStorylineStoreExtended, type Storyline, type StorylineIssue } from '@/core'
 
 // ============================================================================
@@ -29,6 +30,7 @@ const emit = defineEmits<{
 // ============================================================================
 
 const storylineStore = useStorylineStoreExtended()
+const { getCoverImageUrl } = useImage()
 
 // ============================================================================
 // State
@@ -68,8 +70,43 @@ const handleEdit = () => {
   isViewOnly.value = false
 }
 
-const handleSubmit = async () => {
-  // TODO: implement save
+const dragIndex = ref<number | null>(null)
+const dragOverIndex = ref<number | null>(null)
+
+const onDragStart = (index: number, event: DragEvent) => {
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('text/plain', String(index))
+  }
+  // Defer state changes so re-rendering doesn't cancel the drag in the browser
+  setTimeout(() => { dragIndex.value = index }, 0)
+}
+
+const onDrop = async (index: number) => {
+  const from = dragIndex.value
+  const details = storylineDetails.value
+  const storylineId = props.storyline?.storyline_id
+  onDragEnd()
+  if (from === null || !details || !storylineId || from === index) return
+
+  const previous = [...details.issues]
+  const [moved] = details.issues.splice(from, 1)
+  details.issues.splice(index, 0, moved)
+
+  const ok = await storylineStore.reorderStorylineIssues(
+    storylineId,
+    details.issues.map(i => i.issue_id)
+  )
+  if (!ok) details.issues = previous
+}
+
+const onDragEnd = () => {
+  dragIndex.value = null
+  dragOverIndex.value = null
+}
+
+const handleSubmit = () => {
+  isViewOnly.value = true
 }
 
 // ============================================================================
@@ -122,12 +159,31 @@ watch(() => props.modelValue, async (newValue) => {
       <h5>Reading Order ({{ storylineDetails.issues.length }} issues)</h5>
       <div class="reading-order-list">
         <div
-          v-for="issue in storylineDetails.issues"
+          v-for="(issue, index) in storylineDetails.issues"
           :key="issue.storyline_issue_id"
           class="reading-order-item"
-          :class="{ owned: issue.owned }"
+          :class="{
+            owned: issue.owned,
+            draggable: !isViewOnly,
+            dragging: dragIndex === index,
+            'drag-over': dragOverIndex === index && dragIndex !== index
+          }"
+          :draggable="!isViewOnly"
+          @dragstart="onDragStart(index, $event)"
+          @dragover.prevent="dragOverIndex = index"
+          @drop.prevent="onDrop(index)"
+          @dragend="onDragEnd"
         >
-          <span class="order">{{ issue.reading_order }}</span>
+          <span class="drag-handle" v-if="!isViewOnly">
+            <font-awesome-icon :icon="['fas', 'grip-vertical']" />
+          </span>
+          <span class="order" v-if="!isViewOnly">{{ index + 1 }}</span>
+          <img
+            :src="getCoverImageUrl(issue.cover_image_path)"
+            :alt="`${issue.series_title} #${issue.issue_number}`"
+            class="cover-thumb"
+            draggable="false"
+          />
           <span class="part-label" v-if="issue.part_label">{{ issue.part_label }}</span>
           <span class="series">{{ issue.series_title }}</span>
           <span class="issue">#{{ issue.issue_number }}</span>
@@ -166,10 +222,35 @@ watch(() => props.modelValue, async (newValue) => {
     background: rgba(25, 135, 84, 0.05);
   }
 
+  &.draggable {
+    cursor: grab;
+  }
+
+  &.dragging {
+    opacity: 0.4;
+  }
+
+  &.drag-over {
+    box-shadow: 0 -3px 0 0 #0d6efd;
+  }
+
+  .drag-handle {
+    color: #adb5bd;
+  }
+
   .order {
     width: 30px;
     font-weight: 600;
     color: #6c757d;
+  }
+
+  .cover-thumb {
+    height: 80px;
+    width: 55px;
+    object-fit: contain;
+    border: 1px solid #dee2e6;
+    border-radius: 2px;
+    background: white;
   }
 
   .part-label {

@@ -109,6 +109,13 @@ router.get('/api/storylines/:id', async (req: Request, res: Response) => {
         i.cover_date,
         s.series_id,
         s.title as series_title,
+        (SELECT cv.cover_image_path
+           FROM cover cv
+           JOIN copy cp ON cv.copy_id = cp.copy_id
+          WHERE cp.issue_id = i.issue_id AND cp.deleted_at IS NULL
+            AND cv.deleted_at IS NULL AND cv.cover_image_path IS NOT NULL
+          ORDER BY cv.is_primary DESC, cv.cover_id
+          LIMIT 1) as cover_image_path,
         EXISTS(SELECT 1 FROM copy c WHERE c.issue_id = i.issue_id AND c.deleted_at IS NULL) as owned
        FROM storyline_issue si
        JOIN issue i ON si.issue_id = i.issue_id
@@ -300,6 +307,31 @@ router.delete('/api/storylines/:id/issues/:issueId', async (req: Request, res: R
     res.json({ message: 'Issue removed from storyline successfully' });
   } catch (err) {
     console.error('Error removing issue from storyline:', err);
+    res.status(500).json({ error: 'Database error occurred' });
+  }
+});
+
+// PUT /api/storylines/:id/issues/reorder - Set reading order from an ordered list of issue ids
+router.put('/api/storylines/:id/issues/reorder', async (req: Request, res: Response) => {
+  try {
+    const storylineId = parseInt(req.params.id);
+    const { issue_ids } = req.body;
+
+    if (!Array.isArray(issue_ids) || issue_ids.some((n: unknown) => !Number.isInteger(n))) {
+      res.status(400).json({ error: 'issue_ids must be an array of integers' });
+      return;
+    }
+
+    for (let i = 0; i < issue_ids.length; i++) {
+      await execute(
+        'UPDATE storyline_issue SET reading_order = ? WHERE storyline_id = ? AND issue_id = ?',
+        [i + 1, storylineId, issue_ids[i]]
+      );
+    }
+
+    res.json({ message: 'Reading order updated successfully' });
+  } catch (err) {
+    console.error('Error reordering storyline issues:', err);
     res.status(500).json({ error: 'Database error occurred' });
   }
 });
