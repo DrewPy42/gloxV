@@ -1,7 +1,7 @@
 <template>
   <Modal
     v-model="isOpen"
-    :title="isEditing ? 'Edit Issue' : 'Add Issue'"
+    :title="isViewOnly ? 'View Issue' : isEditing ? 'Edit Issue' : 'Add Issue'"
     :loading="loading"
     :confirm-disabled="!isValid"
     :confirm-text="isEditing ? 'Save' : 'Add'"
