@@ -200,23 +200,25 @@ router.put('/api/storylines/:id', async (req: Request, res: Response) => {
       description,
       banner_image_path
     } = req.body;
+    // Only overwrite optional fields the client actually sent
+    const has = (key: string) => (key in req.body ? 1 : 0);
 
     const result = await execute(
       `UPDATE storyline SET
         storyline_name = COALESCE(?, storyline_name),
         storyline_type = COALESCE(?, storyline_type),
-        start_date = ?,
-        end_date = ?,
-        description = ?,
-        banner_image_path = ?
+        start_date = IF(?, ?, start_date),
+        end_date = IF(?, ?, end_date),
+        description = IF(?, ?, description),
+        banner_image_path = IF(?, ?, banner_image_path)
        WHERE storyline_id = ? AND deleted_at IS NULL`,
       [
-        storyline_name,
-        storyline_type,
-        start_date ?? null,
-        end_date ?? null,
-        description ?? null,
-        banner_image_path ?? null,
+        storyline_name || null,
+        storyline_type || null,
+        has('start_date'), start_date || null,
+        has('end_date'), end_date || null,
+        has('description'), description || null,
+        has('banner_image_path'), banner_image_path || null,
         id
       ]
     );
@@ -266,6 +268,25 @@ router.post('/api/storylines/:id/issues', async (req: Request, res: Response) =>
       return;
     }
 
+    const existing = await query<RowDataPacket[]>(
+      'SELECT storyline_issue_id FROM storyline_issue WHERE storyline_id = ? AND issue_id = ?',
+      [storylineId, issue_id]
+    );
+    if (existing.length > 0) {
+      res.status(409).json({ error: 'Issue is already in this storyline' });
+      return;
+    }
+
+    // Default to the end of the reading order
+    let order = reading_order || null;
+    if (!order) {
+      const max = await query<RowDataPacket[]>(
+        'SELECT COALESCE(MAX(reading_order), 0) as max_order FROM storyline_issue WHERE storyline_id = ?',
+        [storylineId]
+      );
+      order = Number(max[0].max_order) + 1;
+    }
+
     const result = await execute(
       `INSERT INTO storyline_issue (storyline_id, issue_id, part_number, part_label, reading_order)
        VALUES (?, ?, ?, ?, ?)`,
@@ -274,7 +295,7 @@ router.post('/api/storylines/:id/issues', async (req: Request, res: Response) =>
         issue_id,
         part_number || null,
         part_label || null,
-        reading_order || null
+        order
       ]
     );
 

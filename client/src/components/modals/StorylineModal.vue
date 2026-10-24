@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { Modal, Card } from '@/components/common'
-import { useImage } from '@/composables'
+import { Modal, Card, FormField } from '@/components/common'
+import { useImage, useConfirmation } from '@/composables'
+import StorylineAddIssue from './StorylineAddIssue.vue'
 import { useStorylineStoreExtended, type Storyline, type StorylineIssue } from '@/core'
 
 // ============================================================================
@@ -31,6 +32,7 @@ const emit = defineEmits<{
 
 const storylineStore = useStorylineStoreExtended()
 const { getCoverImageUrl } = useImage()
+const confirmation = useConfirmation()
 
 // ============================================================================
 // State
@@ -38,6 +40,8 @@ const { getCoverImageUrl } = useImage()
 
 const loading = ref(false)
 const isViewOnly = ref(props.viewOnly)
+const formData = ref({ storyline_name: '', description: '' })
+const saving = ref(false)
 
 interface StorylineDetails {
   storyline: Storyline
@@ -55,7 +59,9 @@ const isOpen = computed({
   set: (value) => emit('update:modelValue', value)
 })
 
-const modalTitle = computed(() => props.storyline?.storyline_name || 'Storyline')
+const modalTitle = computed(() =>
+  storylineDetails.value?.storyline.storyline_name || props.storyline?.storyline_name || 'Storyline'
+)
 
 // ============================================================================
 // Methods
@@ -66,7 +72,15 @@ const handleClose = () => {
   isOpen.value = false
 }
 
+const resetForm = () => {
+  formData.value = {
+    storyline_name: storylineDetails.value?.storyline.storyline_name ?? '',
+    description: storylineDetails.value?.storyline.description ?? ''
+  }
+}
+
 const handleEdit = () => {
+  resetForm()
   isViewOnly.value = false
 }
 
@@ -105,8 +119,69 @@ const onDragEnd = () => {
   dragOverIndex.value = null
 }
 
-const handleSubmit = () => {
-  isViewOnly.value = true
+const handleAddIssue = async (issueId: number) => {
+  const storylineId = props.storyline?.storyline_id
+  if (!storylineId) return
+  saving.value = true
+  try {
+    const ok = await storylineStore.addIssueToStoryline(storylineId, issueId, {})
+    if (!ok) return
+    storylineDetails.value = await storylineStore.fetchStorylineWithIssues(storylineId)
+    emit('saved', storylineDetails.value!.storyline)
+  } finally {
+    saving.value = false
+  }
+}
+
+const handleRemoveIssue = async (issue: StorylineIssue) => {
+  const storylineId = props.storyline?.storyline_id
+  const details = storylineDetails.value
+  if (!storylineId || !details) return
+
+  const confirmed = await confirmation.confirm(
+    `Remove ${issue.series_title} #${issue.issue_number} from this storyline? The issue stays in your collection.`,
+    'Remove Issue'
+  )
+  if (!confirmed) return
+
+  saving.value = true
+  try {
+    if (!await storylineStore.removeIssueFromStoryline(storylineId, issue.issue_id)) return
+    const remaining = details.issues.filter(i => i.issue_id !== issue.issue_id)
+    // Close the gap in the reading order
+    await storylineStore.reorderStorylineIssues(storylineId, remaining.map(i => i.issue_id))
+    storylineDetails.value = await storylineStore.fetchStorylineWithIssues(storylineId)
+    emit('saved', details.storyline)
+  } finally {
+    saving.value = false
+  }
+}
+
+const handleSubmit = async () => {
+  const details = storylineDetails.value
+  const storylineId = props.storyline?.storyline_id
+  if (!details || !storylineId) return
+
+  const name = formData.value.storyline_name.trim()
+  if (!name) return
+
+  saving.value = true
+  try {
+    const ok = await storylineStore.updateRecord(storylineId, {
+      storyline_name: name,
+      description: formData.value.description.trim()
+    })
+    if (!ok) return
+    details.storyline = {
+      ...details.storyline,
+      storyline_name: name,
+      description: formData.value.description.trim()
+    }
+    emit('saved', details.storyline)
+    isViewOnly.value = true
+  } finally {
+    saving.value = false
+  }
 }
 
 // ============================================================================
@@ -121,6 +196,7 @@ watch(() => props.modelValue, async (newValue) => {
       loading.value = true
       try {
         storylineDetails.value = await storylineStore.fetchStorylineWithIssues(props.storyline.storyline_id)
+        resetForm()
       } finally {
         loading.value = false
       }
@@ -133,7 +209,7 @@ watch(() => props.modelValue, async (newValue) => {
   <Modal
     v-model="isOpen"
     :title="modalTitle"
-    :loading="loading"
+    :loading="loading || saving"
     :show-confirm-button="!isViewOnly"
     confirm-text="Save"
     :cancel-text="isViewOnly ? 'Close' : 'Cancel'"
@@ -152,9 +228,22 @@ watch(() => props.modelValue, async (newValue) => {
         </button>
       </template>
 
-      <p v-if="storylineDetails.storyline.description" class="description">
-        {{ storylineDetails.storyline.description }}
-      </p>
+      <template v-if="isViewOnly">
+        <p v-if="storylineDetails.storyline.description" class="description">
+          {{ storylineDetails.storyline.description }}
+        </p>
+      </template>
+      <template v-else>
+        <FormField v-model="formData.storyline_name" label="Title" required />
+        <FormField v-model="formData.description" type="textarea" label="Notes" :rows="4" />
+      </template>
+
+      <StorylineAddIssue
+        v-if="!isViewOnly"
+        :existing-issue-ids="storylineDetails.issues.map(i => i.issue_id)"
+        :saving="saving"
+        @add="handleAddIssue"
+      />
 
       <h5>Reading Order ({{ storylineDetails.issues.length }} issues)</h5>
       <div class="reading-order-list">
@@ -190,6 +279,16 @@ watch(() => props.modelValue, async (newValue) => {
           <span class="owned-badge" v-if="issue.owned">
             <font-awesome-icon :icon="['fas', 'check']" />
           </span>
+          <button
+            v-if="!isViewOnly"
+            type="button"
+            class="btn btn-sm btn-outline-danger"
+            title="Remove from storyline"
+            :disabled="saving"
+            @click="handleRemoveIssue(issue)"
+          >
+            <font-awesome-icon :icon="['fas', 'trash']" />
+          </button>
         </div>
       </div>
     </Card>

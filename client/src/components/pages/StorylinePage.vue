@@ -19,6 +19,7 @@
       @per-page-changed="storylineStore.setPerPage"
       @row-click="handleRowClick"
       @view="openViewModal"
+      @edit="openEditModal"
     >
       <template #cell-storyline_name="{ record }">
         <a href="#" @click.prevent="openViewModal(record)">
@@ -36,7 +37,8 @@
     <StorylineModal
       v-model="isModalOpen"
       :storyline="selectedStoryline"
-      :view-only="true"
+      :view-only="viewOnly"
+      @saved="handleSaved"
     />
 
   </div>
@@ -52,6 +54,7 @@ const storylineStore = useStorylineStoreExtended()
 
 const isModalOpen = ref(false)
 const selectedStoryline = ref<Storyline | null>(null)
+const viewOnly = ref(true)
 
 const columns: TableColumn[] = [
   { key: 'storyline_name', label: 'Name', sortable: true, type: 'link' },
@@ -77,8 +80,19 @@ const handleRowClick = (record: Storyline) => {
 }
 
 const openViewModal = (record: Storyline) => {
-  selectedStoryline.value = record
+  selectedStoryline.value = { ...record }
+  viewOnly.value = true
   isModalOpen.value = true
+}
+
+const openEditModal = (record: Storyline) => {
+  selectedStoryline.value = { ...record }
+  viewOnly.value = false
+  isModalOpen.value = true
+}
+
+const handleSaved = () => {
+  storylineStore.fetchRecords()
 }
 
 onMounted(() => {
