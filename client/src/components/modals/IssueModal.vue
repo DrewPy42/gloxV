@@ -102,6 +102,7 @@
         <template #header-actions>
           <button
             class="btn btn-sm btn-primary"
+            @click="openAddCopy"
           >
             <font-awesome-icon :icon="['fas', 'plus']" /> Add Copy
           </button>
@@ -122,6 +123,8 @@
           :actions="['edit', 'delete']"
           id-field="copy_id"
           entity-name="copies"
+          @edit="openEditCopy"
+          @delete="handleDeleteCopy"
         >
           <template #cell-cover_image_path="{ record }">
             <img
@@ -140,6 +143,25 @@
       </Card>
     </div>
 
+    <CopyModal
+      v-model="showCopyModal"
+      :issue-id="props.issue?.issue_id ?? 0"
+      :copy="editingCopy"
+      @saved="reloadCopies"
+    />
+
+    <Modal
+      v-model="confirmation.isConfirmOpen.value"
+      :title="confirmation.confirmTitle.value"
+      size="sm"
+      confirm-text="Delete"
+      confirm-variant="danger"
+      @confirm="confirmation.handleConfirm"
+      @close="confirmation.handleCancel"
+    >
+      <p>{{ confirmation.confirmMessage.value }}</p>
+    </Modal>
+
     <!-- Cover Viewer Modal -->
     <CoverViewerModal
       v-model="showCoverViewer"
@@ -152,8 +174,9 @@
 import { ref, computed, watch } from 'vue'
 import { Card, Modal, FormField, DataTable, type TableColumn } from '@/components/common'
 import CoverViewerModal from './CoverViewerModal.vue'
+import CopyModal from './CopyModal.vue'
 import { useIssueStore, useCopyStore, type Issue, type Copy } from '@/core'
-import { useImage } from '@/composables'
+import { useImage, useConfirmation } from '@/composables'
 
 // ============================================================================
 // Props & Emits
@@ -195,6 +218,9 @@ const copies = ref<Copy[]>([])
 const loadingCopies = ref(false)
 const showCoverViewer = ref(false)
 const selectedCopy = ref<Copy | null>(null)
+const showCopyModal = ref(false)
+const editingCopy = ref<Copy | null>(null)
+const confirmation = useConfirmation()
 const isViewOnly = ref(props.viewOnly)
 
 const defaultFormData = (): Partial<Issue> => ({
@@ -334,6 +360,30 @@ const handleClose = () => {
   copies.value = []
   isViewOnly.value = props.viewOnly
   isOpen.value = false
+}
+
+const reloadCopies = async () => {
+  if (props.issue?.issue_id) await loadCopies(props.issue.issue_id)
+}
+
+const openAddCopy = () => {
+  editingCopy.value = null
+  showCopyModal.value = true
+}
+
+const openEditCopy = (copy: Copy) => {
+  editingCopy.value = { ...copy }
+  showCopyModal.value = true
+}
+
+const handleDeleteCopy = async (copy: Copy) => {
+  const confirmed = await confirmation.confirm(
+    `Delete this ${formatLabel(copy.format)} copy?`,
+    'Delete Copy'
+  )
+  if (!confirmed) return
+  await copyStore.deleteRecord(copy.copy_id)
+  await reloadCopies()
 }
 
 const openCoverViewer = (copy: Copy) => {

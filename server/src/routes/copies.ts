@@ -27,6 +27,19 @@ interface CountRow extends RowDataPacket {
 }
 
 // GET /api/copies - List copies with filters
+// GET /api/conditions - List condition codes
+router.get('/api/conditions', async (_req: Request, res: Response) => {
+  try {
+    const results = await query<RowDataPacket[]>(
+      'SELECT condition_id, condition_code, condition_text, condition_points FROM condition_code ORDER BY sort_order, condition_id'
+    );
+    res.json({ results });
+  } catch (err) {
+    console.error('Error fetching conditions:', err);
+    res.status(500).json({ error: 'Database error occurred' });
+  }
+});
+
 router.get('/api/copies', async (req: Request, res: Response) => {
   try {
     // location_path: walk up the hierarchy from the copy's location to build a breadcrumb string
