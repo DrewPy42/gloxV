@@ -1,8 +1,37 @@
 import { Router, Request, Response } from 'express';
 import { RowDataPacket } from 'mysql2';
+import path from 'path';
+import fs from 'fs';
+import multer from 'multer';
 import { query, execute } from '../controllers/db';
 
 const router = Router();
+
+const LOGO_DIR = process.env.LOGO_DIR
+  || path.resolve(__dirname, '../../../client/public/images/logos');
+
+const ALLOWED_LOGO_TYPES: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/gif': '.gif',
+  'image/webp': '.webp'
+};
+
+const logoUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      fs.mkdirSync(LOGO_DIR, { recursive: true });
+      cb(null, LOGO_DIR);
+    },
+    filename: (req, file, cb) => {
+      cb(null, `publisher-${parseInt(req.params.id)}-${Date.now()}${ALLOWED_LOGO_TYPES[file.mimetype]}`);
+    }
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    cb(null, file.mimetype in ALLOWED_LOGO_TYPES);
+  }
+});
 
 interface PublisherRow extends RowDataPacket {
   publisher_id: number;
@@ -171,6 +200,37 @@ router.put('/api/publishers/:id', async (req: Request, res: Response) => {
     console.error('Error updating publisher:', err);
     res.status(500).json({ error: 'Database error occurred' });
   }
+});
+
+// POST /api/publishers/:id/logo - Upload or replace a publisher logo
+router.post('/api/publishers/:id/logo', (req: Request, res: Response) => {
+  logoUpload.single('logo')(req, res, async (uploadErr) => {
+    if (uploadErr) {
+      res.status(400).json({ error: uploadErr.message });
+      return;
+    }
+    if (!req.file) {
+      res.status(400).json({ error: 'A JPG, PNG, GIF or WebP image is required' });
+      return;
+    }
+    try {
+      const id = parseInt(req.params.id);
+      const result = await execute(
+        'UPDATE publisher SET logo_path = ? WHERE publisher_id = ? AND deleted_at IS NULL',
+        [req.file.filename, id]
+      );
+      if (result.affectedRows === 0) {
+        fs.unlink(req.file.path, () => {});
+        res.status(404).json({ error: 'Publisher not found' });
+        return;
+      }
+      res.json({ logo_path: req.file.filename, message: 'Logo uploaded successfully' });
+    } catch (err) {
+      fs.unlink(req.file.path, () => {});
+      console.error('Error saving publisher logo:', err);
+      res.status(500).json({ error: 'Database error occurred' });
+    }
+  });
 });
 
 // DELETE /api/publishers/:id - Soft delete a publisher

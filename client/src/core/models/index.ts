@@ -56,7 +56,7 @@ export interface JobTitle {
 export interface Publisher extends AuditFields {
   publisher_id: number
   publisher_name: string
-  logo_path?: string
+  logo_path?: string | null
   website?: string
   notes?: string
   // Computed fields from API

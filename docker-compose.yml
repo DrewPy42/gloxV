@@ -26,11 +26,13 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       CHOKIDAR_USEPOLLING: "true"  # Enable polling for file changes inside Docker
+      LOGO_DIR: /logos
     ports:
       - "${SERVER_PORT}:3000"
     volumes:
       - ./server:/app
       - /app/node_modules  # Do not share node_modules between host and container
+      - ./client/public/images/logos:/logos  # Uploaded publisher logos are served by the client
       # - ../env:/app/.env
     depends_on:
       mysql:

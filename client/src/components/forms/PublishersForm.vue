@@ -15,8 +15,8 @@
         <!-- Logo Display -->
         <div class="col-md-2 text-center">
           <img
-            v-if="formData.logo_path"
-            :src="getLogoImageUrl(formData.logo_path)"
+            v-if="logoPreviewUrl || formData.logo_path"
+            :src="logoPreviewUrl || getLogoImageUrl(formData.logo_path)"
             :alt="formData.publisher_name"
             class="publisher-logo-large"
           />
@@ -25,6 +25,28 @@
             :icon="['fas', 'building']"
             class="text-muted publisher-icon-large"
           />
+          <div v-if="props.isEditing" class="logo-upload">
+            <input
+              ref="logoInput"
+              type="file"
+              accept="image/jpeg,image/png,image/gif,image/webp"
+              class="d-none"
+              @change="handleLogoSelected"
+            />
+            <button type="button" class="btn btn-sm btn-outline-secondary mb-2" @click="logoInput?.click()">
+              <font-awesome-icon :icon="['fas', 'upload']" />
+              {{ formData.logo_path || logoPreviewUrl ? 'Change Logo' : 'Upload Logo' }}
+            </button>
+            <button
+              v-if="formData.logo_path || logoPreviewUrl"
+              type="button"
+              class="btn btn-sm btn-outline-danger ms-1"
+              @click="handleClearLogo"
+            >
+              <font-awesome-icon :icon="['fas', 'xmark']" /> Clear Logo
+            </button>
+            <div v-if="logoError" class="text-danger small mt-1">{{ logoError }}</div>
+          </div>
         </div>
 
         <!-- Publisher Info -->
@@ -133,7 +155,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { Card, FormField, StatCard, DataTable, type TableColumn } from '@/components/common'
 import { useSeriesStore, type Publisher, type Series } from '@/core'
@@ -152,6 +174,7 @@ const emit = defineEmits<{
   (e: 'update', data: Partial<Publisher>): void
   (e: 'view-series', series: Series): void
   (e: 'edit'): void
+  (e: 'logo-selected', file: File | null): void
 }>()
 
 // ============================================================================
@@ -166,6 +189,12 @@ const { formatCurrency } = useFormatting()
 // ============================================================================
 const formData = ref<Partial<Publisher>>({})
 const errors = ref<Record<string, string>>({})
+
+// Logo upload state
+const MAX_LOGO_BYTES = 5 * 1024 * 1024
+const logoInput = ref<HTMLInputElement | null>(null)
+const logoPreviewUrl = ref<string | null>(null)
+const logoError = ref('')
 
 // Series DataTable state
 const seriesRecords = ref<Series[]>([])
@@ -233,6 +262,39 @@ const handleViewSeries = (series: Series) => {
   emit('view-series', series)
 }
 
+const clearLogoPreview = () => {
+  if (logoPreviewUrl.value) URL.revokeObjectURL(logoPreviewUrl.value)
+  logoPreviewUrl.value = null
+}
+
+const handleClearLogo = () => {
+  clearLogoPreview()
+  logoError.value = ''
+  formData.value.logo_path = null
+  emit('logo-selected', null)
+}
+
+const handleLogoSelected = (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+
+  if (!/^image\/(jpeg|png|gif|webp)$/.test(file.type)) {
+    logoError.value = 'Logo must be a JPG, PNG, GIF or WebP image'
+    return
+  }
+  if (file.size > MAX_LOGO_BYTES) {
+    logoError.value = 'Logo must be 5 MB or smaller'
+    return
+  }
+
+  logoError.value = ''
+  clearLogoPreview()
+  logoPreviewUrl.value = URL.createObjectURL(file)
+  emit('logo-selected', file)
+}
+
 // ============================================================================
 // Watchers
 // ============================================================================
@@ -250,6 +312,7 @@ watch(formData, (newData) => {
 // ============================================================================
 // Lifecycle
 // ============================================================================
+onBeforeUnmount(clearLogoPreview)
 onMounted(() => {
   // Initialize form data when component mounts
   formData.value = { ...props.publisher }
@@ -268,6 +331,10 @@ onMounted(() => {
   max-width: 150px;
   object-fit: contain;
   margin-bottom: 10px;
+}
+
+.logo-upload {
+  margin-top: 0.5rem;
 }
 
 .publisher-icon-large {

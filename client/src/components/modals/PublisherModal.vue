@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { Modal } from '@/components/common'
 import PublishersForm from '@/components/forms/PublishersForm.vue'
-import { usePublisherStore, type Publisher, type Series } from '@/core'
+import { usePublisherStore, fetchWrapper, API_BASE, type Publisher, type Series } from '@/core'
 
 // ============================================================================
 // Props & Emits
@@ -37,6 +37,7 @@ const publisherStore = usePublisherStore()
 
 const isViewOnly = ref(props.viewOnly)
 const formData = ref<Partial<Publisher>>({})
+const pendingLogo = ref<File | null>(null)
 
 // ============================================================================
 // Computed
@@ -66,8 +67,17 @@ const handleFormUpdate = (data: Partial<Publisher>) => {
 
 const handleSave = async () => {
   if (!props.publisher?.publisher_id) return
-  await publisherStore.updateRecord(props.publisher.publisher_id, formData.value)
+  const id = props.publisher.publisher_id
+  await publisherStore.updateRecord(id, formData.value)
   const saved = { ...props.publisher, ...formData.value } as Publisher
+  if (pendingLogo.value) {
+    const result = await fetchWrapper.upload<{ logo_path: string }>(
+      `${API_BASE}/publishers/${id}/logo`,
+      pendingLogo.value,
+      'logo'
+    )
+    saved.logo_path = result.logo_path
+  }
   emit('saved', saved)
   handleClose()
 }
@@ -75,6 +85,7 @@ const handleSave = async () => {
 const handleClose = () => {
   isViewOnly.value = props.viewOnly
   formData.value = {}
+  pendingLogo.value = null
   isOpen.value = false
 }
 
@@ -110,6 +121,7 @@ watch(() => props.modelValue, (newValue) => {
       :publisher="publisher"
       :is-editing="isEditing"
       @update="handleFormUpdate"
+      @logo-selected="pendingLogo = $event"
       @view-series="handleViewSeries"
       @edit="isViewOnly = false"
     />
