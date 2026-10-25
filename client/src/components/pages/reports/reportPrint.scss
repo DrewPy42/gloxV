@@ -1,0 +1,109 @@
+.report-page {
+  padding: 1.5rem;
+
+  h2 {
+    font-size: 1.25rem;
+    margin: 1.5rem 0 0.75rem;
+    color: #495057;
+  }
+
+  .report-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+
+    th,
+    td {
+      padding: 0.25rem 0.5rem;
+      border-bottom: 1px solid #dee2e6;
+      text-align: left;
+    }
+
+    thead th {
+      border-bottom: 2px solid #495057;
+    }
+
+    .num {
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    tr {
+      page-break-inside: avoid;
+    }
+
+    tbody tr:nth-child(even) {
+      background-color: #f1f3f5;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    thead {
+      display: table-header-group;
+    }
+
+    tfoot td,
+    tfoot th,
+    .subtotal td,
+    .subtotal th {
+      font-weight: bold;
+      border-top: 2px solid #495057;
+    }
+
+    .tag {
+      display: inline-block;
+      margin-left: 0.5rem;
+      padding: 0 0.5rem;
+      border-radius: 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      white-space: nowrap;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .tag-copy {
+      background-color: #0d6efd;
+      color: #fff;
+    }
+
+    .tag-cover {
+      background-color: #6f42c1;
+      color: #fff;
+      text-transform: capitalize;
+    }
+
+    .missing td {
+      color: #b02a37;
+      font-style: italic;
+    }
+  }
+}
+
+@media print {
+  header,
+  footer,
+  .no-print {
+    display: none !important;
+  }
+
+  .report-page {
+    padding: 0;
+  }
+
+  .series-block {
+    page-break-inside: auto;
+    margin-bottom: 1rem;
+  }
+
+  .series-block > h3 {
+    page-break-after: avoid;
+  }
+}

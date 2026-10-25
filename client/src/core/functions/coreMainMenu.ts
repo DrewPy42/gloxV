@@ -15,7 +15,9 @@ export default function(): MainMenu {
       { title: 'Storylines Dashboard', link: '/storylines', iconCode: 'fas', iconString: 'book-open' },
     ],
     reportsMenuOptions: [
-      { title: 'Reports', link: '/reports', iconCode: 'fas', iconString: 'file-alt' },
+      { title: 'All Reports', link: '/reports', iconCode: 'fas', iconString: 'file-alt' },
+      { title: 'Summary Report', link: '/reports/summary', iconCode: 'fas', iconString: 'chart-pie' },
+      { title: 'Inventory Report', link: '/reports/inventory', iconCode: 'fas', iconString: 'clipboard-list' },
     ],
     toolsMenuOptions: [
       { title: 'Stats', link: '/stats', iconCode: 'fa', iconString: 'fa-bar-chart' },

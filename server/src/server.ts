@@ -28,6 +28,7 @@ import tagsRouter from './routes/tags';
 import creditsRouter from './routes/credits';
 import statsRouter from './routes/stats';
 import personsRouter from './routes/persons';
+import reportsRouter from './routes/reports';
 
 // Register routes
 app.use(seriesRouter);
@@ -43,6 +44,7 @@ app.use(tagsRouter);
 app.use(creditsRouter);
 app.use(statsRouter);
 app.use(personsRouter);
+app.use(reportsRouter);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
