@@ -35,8 +35,7 @@
   "devDependencies": {
     "@babel/eslint-parser": "^8.0.7",
     "@rushstack/eslint-patch": "^1.10.4",
-    "@tsconfig/node20": "^20.1.4",
-    "@types/node": "^22.18.12",
+    "@types/node": "^26.6.6",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^8.62.0",
     "@typescript-eslint/parser": "^8.62.0",

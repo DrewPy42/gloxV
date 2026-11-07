@@ -44,7 +44,7 @@ export default {
     menuIconName: String,
     show: false,
   },
-  setup(props) {
+  setup() {
     return {};
   },
 }

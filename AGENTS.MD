@@ -21,7 +21,7 @@ Goldilox is a full-stack comic book collection management system built with Vue.
   - Pluralize for text formatting
 
 ### Backend (Server)
-- **Runtime**: Node.js 18
+- **Runtime**: Node.js 26 (Active LTS)
 - **Framework**: Express 4.18.0 with TypeScript
 - **Database**: MySQL 9.4
 - **Query Library**: mysql2 3.14.1 with parameterized queries
@@ -260,7 +260,7 @@ Extended stores add entity-specific methods (e.g., `useSeriesStoreExtended` adds
 
 ### Prerequisites
 - Docker and Docker Compose
-- Node.js 18+ (for local development)
+- Node.js 26+ (for local development; Docker images use `node:26-bookworm-slim`)
 
 ### Environment Variables
 Create a `.env` file in the root directory:

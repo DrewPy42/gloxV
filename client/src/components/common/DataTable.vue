@@ -249,7 +249,7 @@
 import { computed } from 'vue'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import Pagination from './Pagination.vue'
-import { useFormatting, useSelection, useSort, useSearch } from '@/composables'
+import { useFormatting, useSelection, useSort } from '@/composables'
 
 // ============================================================================
 // Types
