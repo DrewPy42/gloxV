@@ -21,6 +21,7 @@ export default function(): MainMenu {
     ],
     toolsMenuOptions: [
       { title: 'Stats', link: '/stats', iconCode: 'fa', iconString: 'fa-bar-chart' },
+      { title: 'Inventory Audit', link: '/tools/audit', iconCode: 'fas', iconString: 'clipboard-check' },
     ]
   };
 }

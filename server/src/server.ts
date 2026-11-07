@@ -29,6 +29,7 @@ import creditsRouter from './routes/credits';
 import statsRouter from './routes/stats';
 import personsRouter from './routes/persons';
 import reportsRouter from './routes/reports';
+import auditRouter from './routes/audit';
 
 // Register routes
 app.use(seriesRouter);
@@ -45,6 +46,7 @@ app.use(creditsRouter);
 app.use(statsRouter);
 app.use(personsRouter);
 app.use(reportsRouter);
+app.use(auditRouter);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
