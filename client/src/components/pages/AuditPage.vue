@@ -138,16 +138,47 @@
           </table>
         </div>
       </template>
+    </template>
 
-      <!-- Staging bar -->
-      <div v-if="stagedCount" class="staging-bar">
-        <span>
-          Staged: {{ staged.series.size }} series, {{ staged.volumes.size }} volumes,
-          {{ staged.issues.size }} issues, {{ staged.copies.size }} copies
-        </span>
-        <button class="btn btn-outline-secondary btn-sm" @click="clearStaged">Clear</button>
-        <button class="btn btn-danger btn-sm" @click="openReview">Review &amp; remove…</button>
-      </div>
+    <!-- ===================== EMPTY ISSUES ===================== -->
+    <template v-else-if="tab === 'empty'">
+      <p class="text-muted small">
+        Issues with no copies on record. Stage the ones you no longer want in the database.
+      </p>
+      <p v-if="loading">Loading…</p>
+      <p v-else-if="!emptyIssues.length" class="text-muted">No issues without copies.</p>
+      <template v-else>
+        <p v-if="emptyTruncated" class="text-danger small">Only the first 3000 are shown.</p>
+        <input v-model="filterText" class="form-control form-control-sm mb-2 w-25" placeholder="Filter by series…" />
+        <div v-for="g in emptyGroups" :key="g.series_id" class="series-group mb-3">
+          <div class="series-head d-flex align-items-center gap-2">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              :checked="g.issues.every((i) => staged.issues.has(i.issue_id))"
+              @change="toggleIssues(g.issues, ($event.target as HTMLInputElement).checked)"
+            />
+            <strong>{{ g.title }}</strong>
+            <span class="text-muted small">{{ g.issues.length }} empty issues</span>
+          </div>
+          <table class="table table-sm table-hover mb-0 audit-table">
+            <tbody>
+              <tr v-for="i in g.issues" :key="i.issue_id" :class="{ staged: staged.issues.has(i.issue_id) }">
+                <td style="width: 2rem">
+                  <input
+                    type="checkbox"
+                    class="form-check-input"
+                    :checked="staged.issues.has(i.issue_id)"
+                    @change="toggleIssues([i], ($event.target as HTMLInputElement).checked)"
+                  />
+                </td>
+                <td style="width: 5rem">{{ i.volume_number ? `Vol ${i.volume_number}` : '' }}</td>
+                <td>#{{ i.issue_number }} {{ i.issue_title }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </template>
     </template>
 
     <!-- ===================== TRASH ===================== -->
@@ -223,6 +254,17 @@
         </tbody>
       </table>
     </template>
+
+    <!-- Staging bar (all tabs that stage removals) -->
+
+    <div v-if="stagedCount" class="staging-bar">
+      <span>
+        Staged: {{ staged.series.size }} series, {{ staged.volumes.size }} volumes,
+        {{ staged.issues.size }} issues, {{ staged.copies.size }} copies
+      </span>
+      <button class="btn btn-outline-secondary btn-sm" @click="clearStaged">Clear</button>
+      <button class="btn btn-danger btn-sm" @click="openReview">Review &amp; remove…</button>
+    </div>
 
     <!-- ===================== REVIEW ===================== -->
     <Modal
@@ -300,6 +342,7 @@ const { formatCurrency, formatNumber } = useFormatting()
 
 const tabs = [
   { key: 'audit', label: 'Audit' },
+  { key: 'empty', label: 'Empty issues' },
   { key: 'trash', label: 'Trash' },
   { key: 'history', label: 'History' }
 ]
@@ -393,6 +436,34 @@ const setVerified = async (list: AuditCopy[], verified: boolean) => {
   }
 }
 
+// ---- Empty issues ----
+interface EmptyIssue {
+  issue_id: number; issue_number: string; issue_title: string | null
+  volume_number: number | null; series_id: number; series_title: string
+}
+const emptyIssues = ref<EmptyIssue[]>([])
+const emptyTruncated = ref(false)
+const loadEmpty = async () => {
+  loading.value = true
+  try {
+    const r = await fetchWrapper.get<any>(`${API_BASE}/audit/empty-issues`)
+    emptyIssues.value = r.results
+    emptyTruncated.value = r.truncated
+  } finally {
+    loading.value = false
+  }
+}
+const emptyGroups = computed(() => {
+  const t = filterText.value.trim().toLowerCase()
+  const m = new Map<number, { series_id: number; title: string; issues: EmptyIssue[] }>()
+  for (const i of emptyIssues.value) {
+    if (t && !i.series_title.toLowerCase().includes(t)) continue
+    if (!m.has(i.series_id)) m.set(i.series_id, { series_id: i.series_id, title: i.series_title, issues: [] })
+    m.get(i.series_id)!.issues.push(i)
+  }
+  return [...m.values()]
+})
+
 // ---- Staging ----
 const staged = reactive({
   series: new Set<number>(),
@@ -409,6 +480,9 @@ const isStaged = (c: AuditCopy) =>
 
 const toggleCopies = (list: AuditCopy[], on: boolean) =>
   list.forEach((c) => (on ? staged.copies.add(c.copy_id) : staged.copies.delete(c.copy_id)))
+
+const toggleIssues = (list: { issue_id: number }[], on: boolean) =>
+  list.forEach((i) => (on ? staged.issues.add(i.issue_id) : staged.issues.delete(i.issue_id)))
 
 const toggleEntity = (type: 'series' | 'volume' | 'issue', id: number, _label: string) => {
   const set = type === 'series' ? staged.series : type === 'volume' ? staged.volumes : staged.issues
@@ -471,7 +545,7 @@ const apply = async () => {
     reviewOpen.value = false
     clearStaged()
     flash(`Removed ${r.summary.copies} copies, ${r.summary.issues} issues, ${r.summary.volumes} volumes, ${r.summary.series} series.`)
-    await Promise.all([loadCopies(), loadLocations()])
+    await Promise.all([tab.value === 'empty' ? loadEmpty() : loadCopies(), loadLocations()])
   } catch (e) {
     flash(errText(e), true)
   } finally {
@@ -525,6 +599,7 @@ const switchTab = async (key: string) => {
   tab.value = key
   message.value = null
   try {
+    if (key === 'empty') await loadEmpty()
     if (key === 'trash') await loadTrash()
     if (key === 'history') await loadSessions()
     if (key === 'audit') await loadLocations()

@@ -321,6 +321,30 @@ router.get('/api/audit/copies', async (req: Request, res: Response) => {
 });
 
 // ---------------------------------------------------------------------------
+// GET /api/audit/empty-issues - live issues with no live copies
+// ---------------------------------------------------------------------------
+router.get('/api/audit/empty-issues', async (_req: Request, res: Response) => {
+  try {
+    const limit = 3000;
+    const results = await query<RowDataPacket[]>(
+      `SELECT i.issue_id, i.issue_number, i.issue_title, i.volume_id, v.volume_number,
+              s.series_id, s.title AS series_title
+       FROM issue i
+       JOIN series s ON s.series_id = i.series_id AND s.deleted_at IS NULL
+       LEFT JOIN volume v ON v.volume_id = i.volume_id
+       WHERE i.deleted_at IS NULL
+         AND NOT EXISTS (SELECT 1 FROM copy c WHERE c.issue_id = i.issue_id AND c.deleted_at IS NULL)
+       ORDER BY COALESCE(s.sort_title, s.title), s.series_id, v.volume_number, i.sort_order
+       LIMIT ${limit}`
+    );
+    res.json({ results, truncated: results.length === limit });
+  } catch (err) {
+    console.error('Error fetching empty issues:', err);
+    res.status(500).json({ error: 'Database error occurred' });
+  }
+});
+
+// ---------------------------------------------------------------------------
 // POST /api/audit/verify { copy_ids, verified }
 // ---------------------------------------------------------------------------
 router.post('/api/audit/verify', async (req: Request, res: Response) => {
