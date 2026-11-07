@@ -5,7 +5,7 @@ import { query, execute } from '../controllers/db';
 const router = Router();
 
 // Helper function to calculate sort_order from issue_number
-function calculateSortOrder(issueNumber: string): number {
+export function calculateSortOrder(issueNumber: string): number {
   // Direct numeric
   if (/^\d+$/.test(issueNumber)) {
     return parseInt(issueNumber) * 100;
@@ -44,7 +44,7 @@ function calculateSortOrder(issueNumber: string): number {
 }
 
 // Helper to extract numeric portion
-function extractNumeric(issueNumber: string): number | null {
+export function extractNumeric(issueNumber: string): number | null {
   const match = issueNumber.match(/^-?\d+/);
   return match ? parseInt(match[0]) : null;
 }

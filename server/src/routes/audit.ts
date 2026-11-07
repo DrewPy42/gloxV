@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { RowDataPacket, PoolConnection } from 'mysql2/promise';
 import { query, pool } from '../controllers/db';
+import { calculateSortOrder, extractNumeric } from './issues';
 
 const router = Router();
 
@@ -643,6 +644,228 @@ router.post('/api/audit/sessions/:id/restore', async (req: Request, res: Respons
       return;
     }
     console.error('Error restoring audit session:', err);
+    res.status(500).json({ error: 'Database error occurred' });
+  } finally {
+    conn.release();
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Quick add: stub series / volume / issue / copy records
+// ---------------------------------------------------------------------------
+
+// "1-5, 7, 10A" -> ['1','2','3','4','5','7','10A']
+function parseIssueNumbers(spec: string): string[] {
+  const out: string[] = [];
+  for (const raw of spec.split(',')) {
+    const tok = raw.trim();
+    if (!tok) continue;
+    const range = tok.match(/^(\d+)\s*-\s*(\d+)$/);
+    if (range) {
+      const a = parseInt(range[1]);
+      const b = parseInt(range[2]);
+      if (b < a || b - a >= 200) throw new Error(`Bad issue range "${tok}" (max 200 issues)`);
+      for (let n = a; n <= b; n++) out.push(String(n));
+    } else if (/^[\w./-]{1,10}$/.test(tok)) {
+      out.push(tok);
+    } else {
+      throw new Error(`Bad issue number "${tok}"`);
+    }
+  }
+  const unique = [...new Set(out)];
+  if (!unique.length) throw new Error('Enter at least one issue number');
+  if (unique.length > 200) throw new Error('Max 200 issues at a time');
+  return unique;
+}
+
+const FORMATS = ['paperback', 'hardcover', 'digital', 'cgc_slab', 'cbcs_slab', 'other'];
+
+// GET /api/audit/add-options - publishers, series and volumes for the quick-add form
+router.get('/api/audit/add-options', async (_req: Request, res: Response) => {
+  try {
+    const publishers = await query<RowDataPacket[]>(
+      'SELECT publisher_id, publisher_name FROM publisher WHERE deleted_at IS NULL ORDER BY publisher_name'
+    );
+    const series = await query<RowDataPacket[]>(
+      `SELECT series_id, title, publisher_id FROM series WHERE deleted_at IS NULL
+       ORDER BY COALESCE(sort_title, title)`
+    );
+    const volumes = await query<RowDataPacket[]>(
+      `SELECT v.volume_id, v.series_id, v.volume_number FROM volume v
+       JOIN series s ON s.series_id = v.series_id AND s.deleted_at IS NULL
+       WHERE v.deleted_at IS NULL ORDER BY v.series_id, v.volume_number`
+    );
+    res.json({ publishers, series, volumes });
+  } catch (err) {
+    console.error('Error fetching add options:', err);
+    res.status(500).json({ error: 'Database error occurred' });
+  }
+});
+
+// POST /api/audit/add
+// { series_id | new_series:{title,publisher_id}, volume_number?, issue_numbers,
+//   format?, location_id?, allow_extra_copy? }
+router.post('/api/audit/add', async (req: Request, res: Response) => {
+  const conn = await pool.getConnection();
+  try {
+    const b = req.body || {};
+    const numbers = parseIssueNumbers(String(b.issue_numbers ?? ''));
+    const format = FORMATS.includes(b.format) ? b.format : 'paperback';
+    const locationId = Number.isInteger(Number(b.location_id)) && Number(b.location_id) > 0 ? Number(b.location_id) : null;
+    const volumeNumber =
+      b.volume_number === '' || b.volume_number === null || b.volume_number === undefined
+        ? null
+        : parseInt(b.volume_number);
+    if (volumeNumber !== null && (isNaN(volumeNumber) || volumeNumber < 0)) {
+      res.status(400).json({ error: 'Volume number must be a non-negative whole number' });
+      return;
+    }
+
+    await conn.beginTransaction();
+    const created = { series: 0, volumes: 0, issues: 0, copies: 0 };
+    const skipped: string[] = [];
+
+    // Series
+    let seriesId = parseInt(b.series_id);
+    if (!seriesId) {
+      const title = String(b.new_series?.title ?? '').trim();
+      if (!title) {
+        await conn.rollback();
+        res.status(400).json({ error: 'Pick a series or enter a title for a new one' });
+        return;
+      }
+      const dupes = await q(conn, 'SELECT series_id FROM series WHERE deleted_at IS NULL AND LOWER(title) = LOWER(?)', [title]);
+      if (dupes.length && !b.confirm_duplicate_series) {
+        await conn.rollback();
+        res.status(409).json({ error: `A series named "${title}" already exists. Pick it from the list instead.` });
+        return;
+      }
+      const publisherId = parseInt(b.new_series?.publisher_id) || null;
+      const [r] = await conn.query('INSERT INTO series (title, publisher_id, is_stub) VALUES (?, ?, 1)', [title, publisherId]);
+      seriesId = (r as any).insertId;
+      created.series++;
+    } else {
+      const ok = await q(conn, 'SELECT series_id FROM series WHERE series_id = ? AND deleted_at IS NULL', [seriesId]);
+      if (!ok.length) {
+        await conn.rollback();
+        res.status(404).json({ error: 'Series not found' });
+        return;
+      }
+    }
+
+    // Volume
+    let volumeId: number | null = null;
+    if (volumeNumber !== null) {
+      const v = await q(conn, 'SELECT volume_id FROM volume WHERE series_id = ? AND volume_number = ? AND deleted_at IS NULL', [seriesId, volumeNumber]);
+      if (v.length) {
+        volumeId = v[0].volume_id;
+      } else {
+        const [r] = await conn.query('INSERT INTO volume (series_id, volume_number, is_stub) VALUES (?, ?, 1)', [seriesId, volumeNumber]);
+        volumeId = (r as any).insertId;
+        created.volumes++;
+      }
+    }
+
+    // Issues and copies
+    for (const num of numbers) {
+      const found = await q(
+        conn,
+        `SELECT i.issue_id,
+                (SELECT COUNT(*) FROM copy c WHERE c.issue_id = i.issue_id AND c.deleted_at IS NULL) AS copies
+         FROM issue i
+         WHERE i.series_id = ? AND i.issue_number = ? AND i.deleted_at IS NULL
+           AND ((? IS NULL AND i.volume_id IS NULL) OR i.volume_id = ?)`,
+        [seriesId, num, volumeId, volumeId]
+      );
+      let issueId: number;
+      if (found.length) {
+        issueId = found[0].issue_id;
+        if (num5(found[0].copies) > 0 && !b.allow_extra_copy) {
+          skipped.push(num);
+          continue;
+        }
+      } else {
+        const [r] = await conn.query(
+          `INSERT INTO issue (series_id, volume_id, issue_number, issue_number_numeric, sort_order, is_stub)
+           VALUES (?, ?, ?, ?, ?, 1)`,
+          [seriesId, volumeId, num, extractNumeric(num), calculateSortOrder(num)]
+        );
+        issueId = (r as any).insertId;
+        created.issues++;
+      }
+      await conn.query(
+        'INSERT INTO copy (issue_id, format, location_id, verified_at, is_stub) VALUES (?, ?, ?, NOW(), 1)',
+        [issueId, format, locationId]
+      );
+      created.copies++;
+    }
+
+    await conn.commit();
+    res.status(201).json({ created, skipped, series_id: seriesId, volume_id: volumeId });
+  } catch (err: any) {
+    await conn.rollback();
+    if (err instanceof Error && /^(Bad issue|Enter at least|Max 200)/.test(err.message)) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
+    console.error('Error adding stub records:', err);
+    res.status(500).json({ error: 'Database error occurred' });
+  } finally {
+    conn.release();
+  }
+});
+
+function num5(v: unknown) {
+  return Number(v) || 0;
+}
+
+// GET /api/audit/stubs - records still flagged "needs details"
+router.get('/api/audit/stubs', async (_req: Request, res: Response) => {
+  try {
+    const results = await query<RowDataPacket[]>(
+      `SELECT 'series' AS type, s.series_id AS id, s.title AS label, s.series_id AS series_id, s.created_at
+         FROM series s WHERE s.is_stub = 1 AND s.deleted_at IS NULL
+       UNION ALL
+       SELECT 'volume', v.volume_id, CONCAT(s.title, ' Vol. ', v.volume_number), s.series_id, v.created_at
+         FROM volume v JOIN series s ON s.series_id = v.series_id AND s.deleted_at IS NULL
+         WHERE v.is_stub = 1 AND v.deleted_at IS NULL
+       UNION ALL
+       SELECT 'issue', i.issue_id, CONCAT(s.title, ' #', i.issue_number), s.series_id, i.created_at
+         FROM issue i JOIN series s ON s.series_id = i.series_id AND s.deleted_at IS NULL
+         WHERE i.is_stub = 1 AND i.deleted_at IS NULL
+       UNION ALL
+       SELECT 'copy', c.copy_id, CONCAT(s.title, ' #', i.issue_number, ' (', c.format, ')'), s.series_id, c.created_at
+         FROM copy c JOIN issue i ON i.issue_id = c.issue_id AND i.deleted_at IS NULL
+         JOIN series s ON s.series_id = i.series_id AND s.deleted_at IS NULL
+         WHERE c.is_stub = 1 AND c.deleted_at IS NULL
+       ORDER BY created_at DESC LIMIT 2000`
+    );
+    res.json({ results });
+  } catch (err) {
+    console.error('Error fetching stubs:', err);
+    res.status(500).json({ error: 'Database error occurred' });
+  }
+});
+
+// POST /api/audit/stubs/complete { items: [{type, id}] } - clear the flag
+router.post('/api/audit/stubs/complete', async (req: Request, res: Response) => {
+  const conn = await pool.getConnection();
+  try {
+    const items: { type: EntityType; id: number }[] = Array.isArray(req.body?.items) ? req.body.items : [];
+    await conn.beginTransaction();
+    let updated = 0;
+    for (const type of ['series', 'volume', 'issue', 'copy'] as EntityType[]) {
+      const ids = toIds(items.filter((i) => i.type === type).map((i) => i.id));
+      if (!ids.length) continue;
+      const t = TABLES[type];
+      const [r] = await conn.query(`UPDATE ${t.table} SET is_stub = 0, updated_at = updated_at WHERE ${t.id} IN (?)`, [ids]);
+      updated += (r as any).affectedRows;
+    }
+    await conn.commit();
+    res.json({ updated });
+  } catch (err) {
+    await conn.rollback();
+    console.error('Error completing stubs:', err);
     res.status(500).json({ error: 'Database error occurred' });
   } finally {
     conn.release();

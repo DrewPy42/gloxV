@@ -38,6 +38,11 @@
         <div class="col-md-3">
           <input v-model="filterText" class="form-control form-control-sm" placeholder="Filter by series…" />
         </div>
+        <div class="col-auto ms-auto">
+          <button class="btn btn-primary btn-sm" @click="openAdd">
+            <font-awesome-icon :icon="['fas', 'plus']" class="me-1" /> Add comics…
+          </button>
+        </div>
       </div>
 
       <p v-if="loading">Loading…</p>
@@ -181,6 +186,32 @@
       </template>
     </template>
 
+    <!-- ===================== NEEDS DETAILS ===================== -->
+    <template v-else-if="tab === 'stubs'">
+      <p class="text-muted small">
+        Stub records added through quick-add. Fill in the details from the Series page, then mark them complete.
+      </p>
+      <p v-if="!stubs.length" class="text-muted">Nothing needs details.</p>
+      <template v-else>
+        <button class="btn btn-outline-success btn-sm mb-2" @click="completeStubs(stubs)">
+          Mark all {{ stubs.length }} complete
+        </button>
+        <table class="table table-sm">
+          <thead><tr><th>Type</th><th>Record</th><th>Added</th><th></th></tr></thead>
+          <tbody>
+            <tr v-for="r in stubs" :key="`${r.type}-${r.id}`">
+              <td><span class="badge bg-light text-dark border">{{ r.type }}</span></td>
+              <td>{{ r.label }}</td>
+              <td>{{ new Date(r.created_at).toLocaleString() }}</td>
+              <td class="text-end">
+                <button class="btn btn-outline-success btn-sm py-0" @click="completeStubs([r])">Mark complete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </template>
+    </template>
+
     <!-- ===================== TRASH ===================== -->
     <template v-else-if="tab === 'trash'">
       <div class="btn-group btn-group-sm mb-3">
@@ -266,6 +297,77 @@
       <button class="btn btn-danger btn-sm" @click="openReview">Review &amp; remove…</button>
     </div>
 
+    <!-- ===================== ADD ===================== -->
+    <Modal
+      v-model="addOpen"
+      title="Add comics (stub records)"
+      confirm-text="Add"
+      :confirm-disabled="!canAdd || adding"
+      :loading="adding"
+      @confirm="submitAdd"
+    >
+      <div class="mb-2">
+        <label class="form-label mb-1">Series</label>
+        <input v-model="add.seriesText" list="add-series" class="form-control" placeholder="Type to find, or enter a new title" />
+        <datalist id="add-series">
+          <option v-for="o in seriesLabels" :key="o.id" :value="o.label" />
+        </datalist>
+        <div v-if="addSeries" class="form-text">Existing series.</div>
+        <div v-else-if="add.seriesText.trim()" class="form-text text-warning">
+          No match. A new series "{{ add.seriesText.trim() }}" will be created.
+        </div>
+      </div>
+      <div v-if="!addSeries && add.seriesText.trim()" class="mb-2">
+        <label class="form-label mb-1">Publisher</label>
+        <select v-model="add.publisherId" class="form-select">
+          <option value="">(none yet)</option>
+          <option v-for="p in addOptions.publishers" :key="p.publisher_id" :value="p.publisher_id">{{ p.publisher_name }}</option>
+        </select>
+      </div>
+      <div class="row g-2 mb-2">
+        <div class="col-4">
+          <label class="form-label mb-1">Volume</label>
+          <input v-model="add.volume" list="add-volumes" class="form-control" inputmode="numeric" placeholder="none" />
+          <datalist id="add-volumes">
+            <option v-for="v in addVolumes" :key="v.volume_id" :value="v.volume_number" />
+          </datalist>
+        </div>
+        <div class="col-8">
+          <label class="form-label mb-1">Issue numbers</label>
+          <input v-model="add.issues" class="form-control" placeholder="e.g. 1 or 1-5, 7, 10A" />
+        </div>
+      </div>
+      <p v-if="add.volume !== '' && addSeries && !addVolumeExists" class="form-text text-warning mt-0">
+        Volume {{ add.volume }} doesn't exist for this series. It will be created.
+      </p>
+      <div class="row g-2 mb-2">
+        <div class="col-6">
+          <label class="form-label mb-1">Format</label>
+          <select v-model="add.format" class="form-select">
+            <option v-for="f in formats" :key="f" :value="f">{{ f }}</option>
+          </select>
+        </div>
+        <div class="col-6">
+          <label class="form-label mb-1">Location</label>
+          <select v-model="add.locationId" class="form-select">
+            <option value="">(none)</option>
+            <option v-for="l in locationOptions" :key="l.location_id" :value="String(l.location_id)">
+              {{ '\u00A0\u00A0'.repeat(l.depth) }}{{ l.label }}
+            </option>
+          </select>
+        </div>
+      </div>
+      <div class="form-check">
+        <input id="extra" v-model="add.allowExtra" type="checkbox" class="form-check-input" />
+        <label for="extra" class="form-check-label">Add a copy even if the issue already has one</label>
+      </div>
+      <p v-if="addError" class="text-danger mt-2 mb-0">{{ addError }}</p>
+      <p class="text-muted small mt-2 mb-0">
+        Missing series, volumes and issues are created as stubs, one copy per issue, marked verified.
+        Fill in details later from the Needs details tab.
+      </p>
+    </Modal>
+
     <!-- ===================== REVIEW ===================== -->
     <Modal
       v-model="reviewOpen"
@@ -343,6 +445,7 @@ const { formatCurrency, formatNumber } = useFormatting()
 const tabs = [
   { key: 'audit', label: 'Audit' },
   { key: 'empty', label: 'Empty issues' },
+  { key: 'stubs', label: 'Needs details' },
   { key: 'trash', label: 'Trash' },
   { key: 'history', label: 'History' }
 ]
@@ -553,6 +656,92 @@ const apply = async () => {
   }
 }
 
+// ---- Quick add ----
+interface AddOptions {
+  publishers: { publisher_id: number; publisher_name: string }[]
+  series: { series_id: number; title: string; publisher_id: number | null }[]
+  volumes: { volume_id: number; series_id: number; volume_number: number }[]
+}
+const formats = ['paperback', 'hardcover', 'digital', 'cgc_slab', 'cbcs_slab', 'other']
+const addOpen = ref(false)
+const adding = ref(false)
+const addError = ref('')
+const addOptions = reactive<AddOptions>({ publishers: [], series: [], volumes: [] })
+const add = reactive({
+  seriesText: '', publisherId: '' as string | number, volume: '', issues: '',
+  format: 'paperback', locationId: '', allowExtra: false
+})
+
+const seriesLabels = computed(() => {
+  const pub = new Map(addOptions.publishers.map((p) => [p.publisher_id, p.publisher_name]))
+  const counts = new Map<string, number>()
+  addOptions.series.forEach((s) => counts.set(s.title, (counts.get(s.title) || 0) + 1))
+  return addOptions.series.map((s) => ({
+    id: s.series_id,
+    label: counts.get(s.title)! > 1 ? `${s.title} (${pub.get(s.publisher_id ?? -1) || 'no publisher'}, #${s.series_id})` : s.title
+  }))
+})
+const addSeries = computed(() => {
+  const t = add.seriesText.trim().toLowerCase()
+  const hit = seriesLabels.value.find((o) => o.label.toLowerCase() === t)
+  return hit ? addOptions.series.find((s) => s.series_id === hit.id)! : null
+})
+const addVolumes = computed(() => addOptions.volumes.filter((v) => v.series_id === addSeries.value?.series_id))
+const addVolumeExists = computed(() => addVolumes.value.some((v) => String(v.volume_number) === add.volume.trim()))
+const canAdd = computed(() => !!add.seriesText.trim() && !!add.issues.trim())
+
+const openAdd = async () => {
+  addError.value = ''
+  add.issues = ''
+  add.locationId = /^\d+$/.test(locationId.value) ? locationId.value : ''
+  addOpen.value = true
+  try {
+    Object.assign(addOptions, await fetchWrapper.get<AddOptions>(`${API_BASE}/audit/add-options`))
+  } catch (e) {
+    addError.value = errText(e)
+  }
+}
+
+const submitAdd = async () => {
+  adding.value = true
+  addError.value = ''
+  try {
+    const body: any = {
+      volume_number: add.volume.trim(), issue_numbers: add.issues, format: add.format,
+      location_id: add.locationId || null, allow_extra_copy: add.allowExtra
+    }
+    if (addSeries.value) body.series_id = addSeries.value.series_id
+    else body.new_series = { title: add.seriesText.trim(), publisher_id: add.publisherId || null }
+    const r = await fetchWrapper.post<any>(`${API_BASE}/audit/add`, body)
+    const c = r.created
+    addOpen.value = false
+    flash(
+      `Added ${c.copies} copies (${c.issues} new issues, ${c.volumes} new volumes, ${c.series} new series).` +
+        (r.skipped.length ? ` Skipped, already have a copy: #${r.skipped.join(', #')}.` : '')
+    )
+    add.seriesText = ''; add.volume = ''; add.publisherId = ''
+    await Promise.all([loadCopies(), loadLocations()])
+  } catch (e) {
+    addError.value = errText(e)
+  } finally {
+    adding.value = false
+  }
+}
+
+// ---- Needs details ----
+const stubs = ref<any[]>([])
+const loadStubs = async () => {
+  stubs.value = (await fetchWrapper.get<any>(`${API_BASE}/audit/stubs`)).results
+}
+const completeStubs = async (list: { type: string; id: number }[]) => {
+  try {
+    await fetchWrapper.post(`${API_BASE}/audit/stubs/complete`, { items: list.map((r) => ({ type: r.type, id: r.id })) })
+    await loadStubs()
+  } catch (e) {
+    flash(errText(e), true)
+  }
+}
+
 // ---- Trash ----
 const trashTypes = ['copy', 'issue', 'volume', 'series']
 const trashType = ref('copy')
@@ -600,6 +789,7 @@ const switchTab = async (key: string) => {
   message.value = null
   try {
     if (key === 'empty') await loadEmpty()
+    if (key === 'stubs') await loadStubs()
     if (key === 'trash') await loadTrash()
     if (key === 'history') await loadSessions()
     if (key === 'audit') await loadLocations()
