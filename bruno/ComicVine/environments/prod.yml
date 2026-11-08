@@ -1,0 +1,6 @@
+name: prod
+variables:
+  - name: COMIC_VINE_API_URL
+    value: https://comicvine.gamespot.com/api
+  - secret: true
+    name: COMIC_VINE_API_KEY

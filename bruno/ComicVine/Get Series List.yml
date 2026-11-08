@@ -1,0 +1,21 @@
+info:
+  name: Get Series List
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{COMIC_VINE_API_URL}}/characters?format=json"
+  params:
+    - name: format
+      value: json
+      type: query
+  auth:
+    type: bearer
+    token: "{{COMIC_VINE_API_KEY}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
