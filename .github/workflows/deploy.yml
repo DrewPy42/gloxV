@@ -7,8 +7,10 @@ jobs:
   deploy:
     runs-on: [self-hosted, linux, ARM64]
     steps:
-      - uses: actions/checkout@v5
-      - name: Build and start
-        run: docker compose -p app1 up -d --build --remove-orphans
-      - name: Clean up old images
-        run: docker image prune -f
+    - uses: actions/checkout@v5
+    - name: Load environment
+      run: cp /srv/gloxv/.env .env
+    - name: Build and start
+      run: docker compose -p gloxv up -d --build --remove-orphans
+    - name: Clean up old images
+      run: docker image prune -f
