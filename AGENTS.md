@@ -67,7 +67,7 @@ Goldilox is a full-stack comic book collection management system built with Vue.
 │   │       ├── logos/         # Publisher logos
 │   │       └── characters/    # Character images
 │   ├── Dockerfile             # Stages: dev, build, production (nginx)
-│   ├── nginx.conf             # SPA fallback, /api proxy, logo serving
+│   ├── nginx.conf             # SPA fallback, /api proxy, /images served from the public folder
 │   └── package.json
 │
 ├── server/                    # Express.js backend application
@@ -289,14 +289,15 @@ The client is at http://localhost:5200. The client calls the relative `/api` pat
 docker compose -p gloxv down --remove-orphans
 docker compose -p gloxv up -d --build --remove-orphans
 ```
-Never add `-v` to `down` on the server: it deletes the `mysql-data` database volume and the `logos` volume of uploaded publisher logos.
+Never add `-v` to `down` on the server: it deletes the `mysql-data` database volume.
 
 ### Deployment
 
 - Pushing to `main` triggers `.github/workflows/deploy.yml` on the self-hosted runner (host `raw-potato`, app at `raw-potato:5200`).
 - The workflow copies `/srv/gloxv/.env` into the checkout, tears down the old containers, and rebuilds. The server `.env` only needs the `MYSQL_*` variables.
 - The browser only talks to nginx on port 5200 (same origin), so no CORS is involved in production. The API is not published on the host.
-- Uploaded publisher logos live in the `logos` named volume (server writes `/logos`, nginx serves it from `/srv/uploaded-logos` when a logo is not bundled in the build).
+- Public assets (the contents of `client/public`: covers, logos, characters) live in a persistent host folder on the server, `/srv/gloxv/public` (override with `PUBLIC_DIR` in the server `.env`). It is not in git or the image, so rebuilds never touch it. nginx serves `/images/` from it (mounted read-only at `/srv/public`) and falls back to the copy bundled in the build (placeholders, favicon). The server writes uploaded publisher logos into `<PUBLIC_DIR>/images/logos`; the folder must be writable by uid 1000 (the container's `node` user).
+- To seed or update the public folder from a dev machine: `rsync -avh client/public/ wabbajack@raw-potato.local:/srv/gloxv/public/`.
 - Docker commands for diagnosing the deploy must be run on the server (`ssh raw-potato`), not on a dev machine.
 
 ### File naming

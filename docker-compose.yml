@@ -9,7 +9,9 @@ services:
     ports:
       - "5200:80"
     volumes:
-      - logos:/srv/uploaded-logos:ro
+      # Host folder holding the site's public assets (covers, logos, ...). It lives
+      # outside the repo and image, so rebuilds and redeploys never touch it.
+      - ${PUBLIC_DIR:-/srv/gloxv/public}:/srv/public:ro
     depends_on:
       - server
     restart: unless-stopped
@@ -26,7 +28,8 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       LOGO_DIR: /logos
     volumes:
-      - logos:/logos
+      # Uploaded publisher logos are written into the same persistent public folder.
+      - ${PUBLIC_DIR:-/srv/gloxv/public}/images/logos:/logos
     depends_on:
       mysql:
         condition: service_healthy
@@ -54,7 +57,6 @@ services:
 
 volumes:
   mysql-data:
-  logos:
 
 networks:
   app-network:

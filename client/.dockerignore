@@ -1,3 +1,6 @@
 node_modules
 dist
 .DS_Store
+*.zip
+# User-uploaded images are not baked into the image
+public/images/*/uploads
