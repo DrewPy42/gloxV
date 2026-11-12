@@ -1,24 +1,23 @@
-# Use an official Node.js runtime as a parent image
-FROM node:26-bookworm-slim
-
-# Set the working directory
+# ---- dev: ts-node-dev with reload (used by docker-compose.dev.yml) ----
+FROM node:26-bookworm-slim AS dev
 WORKDIR /app
-
-# Copy package.json and package-lock.json
 COPY package*.json ./
-
-# Install dependencies (including devDependencies for build)
 RUN npm install
-
-# Copy the application code
 COPY . .
+EXPOSE 3000
+CMD ["npm", "run", "dev"]
 
-# Build TypeScript
+# ---- build: compile TypeScript ----
+FROM dev AS build
 RUN npm run build
 
-# Expose the application port
+# ---- production: compiled JS and runtime dependencies only ----
+FROM node:26-bookworm-slim AS production
+ENV NODE_ENV=production
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev
+COPY --from=build /app/dist ./dist
+USER node
 EXPOSE 3000
-
-# Start the application
-# CMD ["npm", "start"]
-CMD ["npm", "run", "dev"]
+CMD ["npm", "start"]

@@ -1,0 +1,34 @@
+# Local development overlay: hot reload, bind mounts, ports exposed on the host.
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+services:
+  client:
+    build:
+      target: dev
+    env_file: .env
+    environment:
+      # The Vite /api proxy runs inside the container, so target the server service.
+      SERVER_URL: http://server
+      SERVER_PORT: "3000"
+    ports: !override
+      - "5200:5173"
+    volumes: !override
+      - ./client:/app
+      - /app/node_modules
+    restart: "no"
+  server:
+    build:
+      target: dev
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "${SERVER_PORT:-3000}:3000"
+    volumes: !override
+      - ./server:/app
+      - /app/node_modules
+      - ./client/public/images/logos:/logos
+    restart: "no"
+  mysql:
+    env_file: .env
+    ports:
+      - "127.0.0.1:3306:3306"
+    restart: "no"
