@@ -175,7 +175,7 @@ import {
   type PublisherStats,
   type HighValueCopy
 } from '@/core'
-import { fetchWrapper, API_BASE } from '@/core'
+import { fetchWrapper } from '@/core'
 
 const statsStore = useStatsStore()
 
@@ -230,7 +230,7 @@ const loadStats = async () => {
   loadingAge.value = true
   try {
     const data = await fetchWrapper.get<{ results: any[] }>(
-      `${API_BASE}/stats/by-age`
+      'http://localhost:3000/api/stats/by-age'
     )
     ageStats.value = data.results
   } catch (e) {
@@ -242,7 +242,7 @@ const loadStats = async () => {
   loadingCondition.value = true
   try {
     const data = await fetchWrapper.get<{ results: any[] }>(
-      `${API_BASE}/stats/by-condition`
+      'http://localhost:3000/api/stats/by-condition'
     )
     conditionStats.value = data.results
   } catch (e) {

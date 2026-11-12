@@ -1,50 +1,62 @@
-# Production stack (used by the deploy workflow).
-# For local development add the dev overlay:
-#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 services:
   client:
     build:
       context: ./client
-      target: production
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      SERVER_URL: ${SERVER_URL}
+      SERVER_PORT: ${SERVER_PORT}
     ports:
-      - "5200:80"
+      - "5200:5173"
     volumes:
-      - logos:/srv/uploaded-logos:ro
+      - ./client:/app
+      - /app/node_modules  # Do not share node_modules between host and container
     depends_on:
       - server
-    restart: unless-stopped
     networks:
       - app-network
   server:
     build:
       context: ./server
-      target: production
+      dockerfile: Dockerfile
     environment:
       MYSQL_HOST: mysql
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
+      CHOKIDAR_USEPOLLING: "true"  # Enable polling for file changes inside Docker
       LOGO_DIR: /logos
+    ports:
+      - "${SERVER_PORT}:3000"
     volumes:
-      - logos:/logos
+      - ./server:/app
+      - /app/node_modules  # Do not share node_modules between host and container
+      - ./client/public/images/logos:/logos  # Uploaded publisher logos are served by the client
+      # - ../env:/app/.env
     depends_on:
       mysql:
         condition: service_healthy
-    restart: unless-stopped
     networks:
       - app-network
   mysql:
-    image: mysql:9.4
+    env_file: .env
+    image: mysql
     environment:
+      MYSQL_HOST: mysql
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql-data:/var/lib/mysql
-    restart: unless-stopped
+      # - ./my.cnf:/etc/mysql/conf.d/custom.cnf Mount custom configuration
     networks:
       - app-network
+    extra_hosts:
+      - "host.docker.internal:172.17.0.1"
+    ports:
+      - "3306:3306"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -53,7 +65,7 @@ services:
 
 volumes:
   mysql-data:
-  logos:
 
 networks:
   app-network:
+
