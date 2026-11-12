@@ -26,9 +26,8 @@ export default defineConfig(({ mode }) => {
     // Read the .env file from the repo root instead of client/, so it's shared
     // with docker-compose and the server.
     envDir: rootDir,
-    // Expose SERVER_* vars (in addition to the default VITE_* vars) to client code
-    // via import.meta.env, scoped so unrelated secrets (e.g. MYSQL_*) stay out of the bundle.
-    envPrefix: ['VITE_', 'SERVER_'],
+    // Only VITE_* vars reach client code; everything else (e.g. MYSQL_*) stays out of the bundle.
+    envPrefix: ['VITE_'],
     build: {
       /**
        * @type {string}
@@ -47,6 +46,11 @@ export default defineConfig(({ mode }) => {
        * Allow to access the server from external devices.
        */
       host: true,
+      /**
+       * @type {string[]}
+       * Hostnames allowed to access the dev server (Vite blocks unknown hosts).
+       */
+      allowedHosts: ['raw-potato'],
       /**
        * @type {Object.<string, import('vite').ProxyOptions>}
        * Proxy configuration for the dev server.
