@@ -1,4 +1,4 @@
-export const API_BASE = `${import.meta.env.SERVER_URL}:${import.meta.env.SERVER_PORT}/api`;
+export const API_BASE = '/api';
 
 interface ApiResponse<T = any> {
   data?: T;

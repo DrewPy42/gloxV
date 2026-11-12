@@ -1,19 +1,18 @@
-# Use the official Node.js image
-FROM node:26-bookworm-slim
-
-# Set working directory
+# ---- dev: Vite dev server with hot reload (used by docker-compose.dev.yml) ----
+FROM node:26-bookworm-slim AS dev
 WORKDIR /app
-
-# Copy package.json and install dependencies
 COPY package*.json ./
-#RUN rm -rf node_modules package-lock.json
 RUN npm install
-
-# Copy the Vue.js app source code
 COPY . .
-
-# Expose the port for the Vue.js app
 EXPOSE 5173
-
-# Start vite in development mode
 CMD ["npm", "run", "dev"]
+
+# ---- build: compile the static bundle ----
+FROM dev AS build
+RUN npm run build
+
+# ---- production: nginx serves the bundle and proxies /api to the server ----
+FROM nginx:1.27-alpine AS production
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 80
