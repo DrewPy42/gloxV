@@ -10,6 +10,9 @@ jobs:
     - uses: actions/checkout@v5
     - name: Load environment
       run: cp /srv/gloxv/.env .env
+    - name: Stop and remove old containers
+      # No -v: the mysql-data and logos volumes must survive.
+      run: docker compose -p gloxv down --remove-orphans
     - name: Build and start
       run: docker compose -p gloxv up -d --build --remove-orphans
     - name: Clean up old images
