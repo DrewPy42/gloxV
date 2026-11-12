@@ -23,18 +23,19 @@ Goldilox is a full-stack comic book collection management system built with Vue.
 ### Backend (Server)
 - **Runtime**: Node.js 26 (Active LTS)
 - **Framework**: Express 4.18.0 with TypeScript
-- **Database**: MySQL 9.4
+- **Database**: MySQL 26.10 (image `mysql:26.10`; the data volume was created by 26.10, and MySQL cannot be downgraded, so never lower this tag)
 - **Query Library**: mysql2 3.14.1 with parameterized queries
 - **Security**: CORS 2.8.5, DOMPurify 3.2.3
 - **Environment**: dotenv 16.4.7
 - **Dev Tools**: nodemon 3.1.10, ts-node, TypeScript 5.8.3
 
 ### Development Environment
-- **Containerization**: Docker with Docker Compose
-- **Services**:
-  - Client (port 5173)
-  - Server (port 3000)
-  - MySQL (port 3306)
+- **Containerization**: Docker with Docker Compose (production stack plus a dev overlay)
+- **Production services** (`docker-compose.yml`):
+  - Client: nginx serving the built Vue bundle on host port 5200 and proxying `/api` to the server
+  - Server: compiled Express app (`npm start`), reachable only inside the Docker network
+  - MySQL: not published to the host
+- **Development services** (`docker-compose.dev.yml` overlay): Vite dev server (5200 -> 5173), ts-node-dev server (`${SERVER_PORT:-3000}`), MySQL on `127.0.0.1:3306`
 
 ## Project Structure
 
@@ -65,7 +66,8 @@ Goldilox is a full-stack comic book collection management system built with Vue.
 │   │       ├── covers/        # Comic cover images
 │   │       ├── logos/         # Publisher logos
 │   │       └── characters/    # Character images
-│   ├── Dockerfile
+│   ├── Dockerfile             # Stages: dev, build, production (nginx)
+│   ├── nginx.conf             # SPA fallback, /api proxy, logo serving
 │   └── package.json
 │
 ├── server/                    # Express.js backend application
@@ -90,13 +92,15 @@ Goldilox is a full-stack comic book collection management system built with Vue.
 │   │   └── types/             # TypeScript type definitions
 │   │       └── models.ts
 │   ├── dist/                  # Compiled JavaScript output
-│   ├── Dockerfile
+│   ├── Dockerfile             # Stages: dev, build, production
 │   ├── tsconfig.json
 │   └── package.json
 │
 ├── sql/                       # Database schemas and migration data
-├── docker-compose.yml         # Docker orchestration
-├── .env                       # Environment variables
+├── docker-compose.yml         # Production stack (used by the deploy workflow)
+├── docker-compose.dev.yml     # Local dev overlay (hot reload, bind mounts, exposed ports)
+├── .github/workflows/deploy.yml  # Deploys on push to main (self-hosted runner)
+├── .env                       # Environment variables (gitignored)
 └── README.md
 ```
 
@@ -272,16 +276,32 @@ MYSQL_PASSWORD=your_password
 ```
 
 ### Running with Docker
+
+**Local development** (hot reload; needs Docker Compose v2.24+ for the `!override` tag):
 ```bash
-# Start all services
-docker-compose up
-
-# Stop all services
-docker-compose down
-
-# Rebuild containers
-docker-compose up --build
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down
 ```
+The client is at http://localhost:5200. The client calls the relative `/api` path, which the Vite proxy forwards to the `server` service.
+
+**Production** (what the deploy workflow runs on the server):
+```bash
+docker compose -p gloxv down --remove-orphans
+docker compose -p gloxv up -d --build --remove-orphans
+```
+Never add `-v` to `down` on the server: it deletes the `mysql-data` database volume and the `logos` volume of uploaded publisher logos.
+
+### Deployment
+
+- Pushing to `main` triggers `.github/workflows/deploy.yml` on the self-hosted runner (host `raw-potato`, app at `raw-potato:5200`).
+- The workflow copies `/srv/gloxv/.env` into the checkout, tears down the old containers, and rebuilds. The server `.env` only needs the `MYSQL_*` variables.
+- The browser only talks to nginx on port 5200 (same origin), so no CORS is involved in production. The API is not published on the host.
+- Uploaded publisher logos live in the `logos` named volume (server writes `/logos`, nginx serves it from `/srv/uploaded-logos` when a logo is not bundled in the build).
+- Docker commands for diagnosing the deploy must be run on the server (`ssh raw-potato`), not on a dev machine.
+
+### File naming
+
+The server filesystem is case-sensitive; macOS is not. Keep git-tracked file names identical in case to how they are imported (e.g. `HomePage.vue`, `SeriesForm.vue`), and keep image file names lowercase because the database stores lowercase paths. To rename a file that differs only by case, use `git mv` twice via a temporary name.
 
 ### Local Development
 
@@ -289,7 +309,7 @@ docker-compose up --build
 ```bash
 cd client
 npm install
-npm run dev        # Development server (port 5173)
+npm run dev        # Development server (port 5173; /api is proxied to SERVER_URL:SERVER_PORT from .env)
 npm run build      # Production build
 npm run preview    # Preview production build
 ```
@@ -327,17 +347,16 @@ Top publishers by value:
 
 ## Security Considerations
 
-- CORS configured for API access
+- Production API is not exposed on the host; nginx proxies `/api` same-origin. `cors()` is still enabled (open) in the server for local development
 - DOMPurify used on both client and server for XSS prevention
 - Parameterized queries prevent SQL injection
 - Environment variables for sensitive configuration
-- Docker network isolation
+- Docker network isolation (MySQL is not published in production)
 - Soft deletes preserve data integrity
 
 ## Git Workflow
 
-Current branch: `objective-antonelli`
-Main branch: `main`
+Main branch: `main`. Pushes to `main` deploy automatically to the server (see Deployment).
 
 ## Migration History
 
